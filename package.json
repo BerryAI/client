@@ -1,0 +1,25 @@
+{
+  "name": "musicoin-ui",
+  "main": "index.html",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "startx": "node ./bin/www",
+    "start": "C:/Users/Dan/Documents/Projects/MusicCoin/nwjs/nw.exe ."
+  },
+  "dependencies": {
+    "body-parser": "~1.15.1",
+    "cookie-parser": "~1.4.3",
+    "debug": "~2.2.0",
+    "express": "~4.13.4",
+    "fs-pull-blob-store": "^0.3.0",
+    "ipfs": "^0.16.0",
+    "jade": "~1.11.0",
+    "lodash": "^4.16.1",
+    "lodash.isfunction": "^3.0.8",
+    "morgan": "~1.7.0",
+    "polymer-cli": "^0.16.0",
+    "serve-favicon": "~2.3.0",
+    "web3": "^0.17.0-beta"
+  }
+}
