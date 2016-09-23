@@ -1,0 +1,56 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="shared-styles.html">
+
+<dom-module id="my-parity-view">
+    <template>
+        <style include="shared-styles">
+            :host {
+                display: block;
+
+                padding: 10px;
+            }
+        </style>
+
+        <div class="card">
+            <p>My default account is {{account}}</p>
+            <p>All accounts {{accounts}}</p>
+            <p>My balance is {{balance}}</p>
+            <p>
+                Mining: {{mining}}<br>
+                My coinbase is {{coinbase}}
+            </p>
+        </div>
+    </template>
+
+    <script>
+        var Web3 = require('web3');
+        var web3 = new Web3();
+        web3.setProvider(new web3.providers.HttpProvider('http://localhost:8545'));
+        Polymer({
+            is: 'my-parity-view',
+            ready: function() {
+                refreshStatus(this);
+            }
+        });
+
+        function refreshStatus(caller) {
+            caller.coinbase = web3.eth.coinbase;
+            caller.mining = web3.eth.mining;
+            caller.account = web3.eth.defaultAccount || "not set" ;
+            caller.accounts = web3.eth.accounts;
+            if (web3.eth.accounts.length > 0) {
+                caller.balance = web3.eth.getBalance(web3.eth.accounts[0]);
+            }
+        }
+    </script>
+</dom-module>
