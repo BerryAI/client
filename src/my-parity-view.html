@@ -19,17 +19,31 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
                 padding: 10px;
             }
+
+            .bg {
+                background-color: rgba(255, 255, 255, 0.5);
+            }
+
+            .fill {
+                width: 100%;
+                height: 100%;
+                opacity: 1;
+            }
+
         </style>
 
-        <div class="card">
-            <p>My default account is {{account}}</p>
-            <p>All accounts {{accounts}}</p>
-            <p>My balance is {{balance}}</p>
-            <p>
-                Mining: {{mining}}<br>
-                My coinbase is {{coinbase}}
-            </p>
+        <div class="bg">
+            <div class="fill">
+                <p>My default account is {{account}}</p>
+                <p>All accounts {{accounts}}</p>
+                <p>My balance is {{balance}}</p>
+                <p>
+                    Mining: {{mining}}<br>
+                    My coinbase is {{coinbase}}
+                </p>
+            </div>
         </div>
+
     </template>
 
     <script>

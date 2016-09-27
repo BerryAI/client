@@ -10,8 +10,6 @@
     "body-parser": "~1.15.1",
     "cookie-parser": "~1.4.3",
     "debug": "~2.2.0",
-    "express": "~4.13.4",
-    "morgan": "~1.7.0",
     "polymer-cli": "^0.16.0",
     "request": "^2.75.0",
     "serve-favicon": "~2.3.0",
@@ -19,11 +17,7 @@
   },
   "window": {
     "title": "Musicoin demo",
-    "width": 800,
-    "height": 600,
-    "min_width": 400,
-    "min_height": 200,
-    "max_width": 800,
-    "max_height": 600
+    "width": 1000,
+    "height": 600
   }
 }

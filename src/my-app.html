@@ -24,7 +24,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 <dom-module id="my-app">
   <template>
-    <style>
+    <style is="custom-styl">
       :host {
         --app-primary-color: #4285f4;
         --app-secondary-color: black;
@@ -33,27 +33,32 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       app-header {
-        color: #383348;
-        background-color: var(--app-primary-color);
+        color: white;
+        opacity: 0.5;
+        background-color: transparent;
       }
-      app-header paper-icon-button {
-        --paper-icon-button-ink-color: white;
-      }
-
       .drawer-list {
         margin: 0 20px;
       }
 
       .drawer-list a {
         display: block;
-
         padding: 0 16px;
-
         text-decoration: none;
-
-        color: var(--app-secondary-color);
-
         line-height: 40px;
+      }
+
+      app-toolbar {
+        background-color: transparent;
+      }
+
+      app-drawer-layout {
+        background-image: url('/images/album.jpg');
+        background-size: cover;
+      }
+
+      iron-pages {
+        height: 100%
       }
 
       .drawer-list a.iron-selected {
@@ -75,7 +80,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <app-drawer>
         <app-toolbar>Menu</app-toolbar>
         <iron-selector selected="[[page]]" attr-for-selected="name" class="drawer-list" role="navigation">
-          <a name="sample-view" href="/sample-view">Music</a>
+          <a name="player-view" href="/player-view">Player</a>
+          <a name="sample-view" href="/sample-view">Upload</a>
           <a name="parity-view" href="/parity-view">Coins</a>
         </iron-selector>
       </app-drawer>
@@ -95,6 +101,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             attr-for-selected="name"
             fallback-selection="view404"
             role="main">
+          <my-player-view name="player-view"></my-player-view>
           <my-sample-view name="sample-view"></my-sample-view>
           <my-parity-view name="parity-view"></my-parity-view>
           <my-view404 name="view404"></my-view404>
@@ -112,12 +119,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           type: String,
           reflectToAttribute: true,
           observer: '_pageChanged',
-          value: "sample-view"
+          value: "player-view"
         }
       },
 
       ready: function() {
-        this.page = 'sample-view';
+        this.page = 'player-view';
       },
 
       observers: [
@@ -125,7 +132,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       ],
 
       _routePageChanged: function(page) {
-        this.page = page || 'sample-view';
+        this.page = page || 'player-view';
       },
 
       _pageChanged: function(page) {
@@ -135,7 +142,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       _showPage404: function() {
-        this.page = 'sample-view';
+        this.page = 'player-view';
       }
     });
   </script>

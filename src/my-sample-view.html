@@ -21,17 +21,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             :host {
                 display: block;
                 padding: 5px;
+                background-color: transparent;
             }
         </style>
-
-        <div class="card">
-            <paper-input id="ipfs_id" label="ipfs id"></paper-input>
-            <paper-button raised on-tap="updateAudio">Play</paper-button>
-            <paper-button raised on-tap="stopPlaying">Pause</paper-button>
-            <audio controls autoplay id="player">
-                <source id="sourceContainer" type="audio/mpeg" />
-            </audio>
-        </div>
 
         <div class="card">
             <paper-input id="file" label="file" type="file"></paper-input>
@@ -39,7 +31,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <p>hash: {{hash}}</p>
         </div>
 
-        <p>status: {{status}}</p>
+        <!--<p>status: {{status}}</p>-->
     </template>
 
     <script>
@@ -48,14 +40,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         Polymer({
             is: 'my-sample-view',
-            updateAudio: function() {
-                var id = this.$.ipfs_id.value;
-                var url = id.startsWith("http") ? id : "http://localhost:8080/ipfs/" + id;
-                playAudioAtUrl(this, this.$.player, this.$.sourceContainer, url);
-            },
-            stopPlaying: function() {
-                this.$.player.pause();
-            },
             loadIntoIPFS: function() {
                 ipfsAdd(this, this.$.file.inputElement.value);
             }
@@ -74,12 +58,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 }
             });
             req.form().append('file', fs.createReadStream(path));
-        }
-
-        function playAudioAtUrl(caller, player, srcContainer, url) {
-            caller.status = "Playing " + url;
-            srcContainer.src = url;
-            player.load();
         }
     </script>
 </dom-module>

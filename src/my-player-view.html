@@ -1,0 +1,101 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-audio-player/paper-audio-player.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../bower_components/paper-card/paper-card.html">
+<script src="../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+
+<dom-module id="my-player-view">
+    <template>
+        <style include="shared-styles" is="custom-sty;e">
+            :host {
+                display: block;
+                height: inherit;
+            }
+
+            .flex-end-align {
+                @apply(--layout-vertical);
+                @apply(--layout-end);
+                height: 100%;
+            }
+
+            paper-input.my-class {
+                --paper-input-container-color: white;
+            }
+        </style>
+
+        <div>
+            <paper-input class="my-class" id="ipfs_id" label="ipfs id"></paper-input>
+            <paper-button raised on-tap="updateAudio">Play</paper-button>
+            <paper-button raised on-tap="stopPlaying">Pause</paper-button>
+            <paper-button raised on-tap="playItem" play-id="QmNpsNioVxMAVGrPwZ5wpLqTbzqUyh54pomATGaoG6eNWH">Cymbals!</paper-button>
+            <paper-button raised on-tap="playItem" play-id="QmazhzHSygTY48LkVs7EmDkApkje8N9M3EUL8NttmPwGkz">Piano!</paper-button>
+        </div>
+        <div class="container flex-end-align">
+            <paper-audio-player controls autoplay id="player" color="#796E90"></paper-audio-player>
+        </div>
+        <!--<p>status: {{status}}</p>-->
+    </template>
+
+    <script>
+        var request = require('request');
+        var fs = require('fs');
+
+        Polymer({
+            is: 'my-player-view',
+            updateAudio: function() {
+                this.playItemById(this.$.ipfs_id.value);
+            },
+            playItem: function(e) {
+                this.playItemById(e.target.getAttribute('play-id'));
+            },
+            playItemById: function(id) {
+                var url = id.startsWith("http") ? id : hashToURL(id);
+                playAudioAtUrl(this, this.$.player, url);
+            },
+            stopPlaying: function() {
+                this.$.player.playPause();
+            },
+            loadIntoIPFS: function() {
+                ipfsAdd(this, this.$.file.inputElement.value);
+            }
+        });
+
+        function hashToURL(hash) {
+            return "http://localhost:8080/ipfs/" + hash;
+        }
+
+        function ipfsAdd(caller, path) {
+            caller.status = "Loading " + path + "...";
+            caller.hash = "Waiting ...";
+            var url = "http://localhost:5001/api/v0/add"
+            var req = request.post(url, function (err, resp, body) {
+                if (err) {
+                    caller.status = "Err: " + err;
+                } else {
+                    caller.status = "Success: Added " + path;
+                    caller.hash = JSON.parse(body).Hash;
+                }
+            });
+            req.form().append('file', fs.createReadStream(path));
+        }
+
+        function playAudioAtUrl(caller, player, url) {
+            caller.status = "Playing " + url;
+            player.src = url;
+            player.restart();
+        }
+    </script>
+</dom-module>
