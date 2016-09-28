@@ -37,65 +37,133 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </style>
 
         <div>
-            <paper-input class="my-class" id="ipfs_id" label="ipfs id"></paper-input>
+            <paper-input class="my-class" id="contract_id" label="contract_id"></paper-input>
+            <paper-input class="my-class" id="pwd" type=password label="account pwd"></paper-input>
             <paper-button raised on-tap="updateAudio">Play</paper-button>
             <paper-button raised on-tap="stopPlaying">Pause</paper-button>
-            <paper-button raised on-tap="playItem" play-id="QmNpsNioVxMAVGrPwZ5wpLqTbzqUyh54pomATGaoG6eNWH">Cymbals!</paper-button>
-            <paper-button raised on-tap="playItem" play-id="QmazhzHSygTY48LkVs7EmDkApkje8N9M3EUL8NttmPwGkz">Piano!</paper-button>
+            <p>status: {{status}}</p>
         </div>
         <div class="container flex-end-align">
             <paper-audio-player controls autoplay id="player" color="#796E90"></paper-audio-player>
         </div>
-        <!--<p>status: {{status}}</p>-->
+
     </template>
 
     <script>
         var request = require('request');
         var fs = require('fs');
+        var Web3 = require('web3');
+        var web3 = new Web3();
+        web3.setProvider(new web3.providers.HttpProvider('http://localhost:8545'));
+
+        // need to get this from the catalog, I think
+        var abi = JSON.parse('[{"constant":true,"inputs":[],"name":"resourceUrl","outputs":[{"name":"","type":"string"}],"type":"function"},{"constant":true,"inputs":[],"name":"coinsPerPlay","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"type":"function"},{"constant":false,"inputs":[],"name":"play","outputs":[{"name":"url","type":"string"},{"name":"key","type":"string"}],"type":"function"},{"inputs":[{"name":"_coinsPerPlay","type":"uint256"},{"name":"_resourceUrl","type":"string"},{"name":"_resourceKey","type":"string"}],"type":"constructor"}]');
 
         Polymer({
             is: 'my-player-view',
             updateAudio: function() {
-                this.playItemById(this.$.ipfs_id.value);
+                this.playItemById(this.$.contract_id.value);
             },
             playItem: function(e) {
                 this.playItemById(e.target.getAttribute('play-id'));
             },
             playItemById: function(id) {
-                var url = id.startsWith("http") ? id : hashToURL(id);
-                playAudioAtUrl(this, this.$.player, url);
+//                var url = id.startsWith("http") ? id : hashToURL(id);
+//                playAudioAtUrl(this, this.$.player, url);
+                playContractAudio(this, this.$.player, id, getContractAbiFromCatalog(id), this.getUserCredentials());
+            },
+            getUserCredentials: function() {
+                // obviously not how this will work...
+                return this.$.pwd.value;
             },
             stopPlaying: function() {
                 this.$.player.playPause();
-            },
-            loadIntoIPFS: function() {
-                ipfsAdd(this, this.$.file.inputElement.value);
             }
-        });
+        })
+
+        function getContractAbiFromCatalog(id) {
+            // TODO: The abi should be registered with the contract in the catalog
+            // The catalog contract abi can be hardcoded into the client.
+            return abi;
+        }
+
+        function playContractAudio(caller, player, contractAddress, contractAbi, pwd) {
+            var ppp = web3.eth.contract(contractAbi).at(contractAddress);
+            var resourceUri = ppp.resourceUrl();
+            caller.status = "Resolved to resource: " + resourceUri;
+            console.log("Resolved to resource: " + resourceUri);
+            var url = covnertToUrl(resourceUri);
+            if (url) {
+                payForPlay(contractAddress, contractAbi, pwd, {
+                    onStatusChange : function(msg) {
+                        console.log(msg)
+                    },
+                    onSuccess : function() {
+                        playAudioAtUrl(caller, player, url);
+                    },
+                    onFailure : function(err) {
+                        console.log(err)
+                    }
+                });
+            }
+            else {
+                console.log("resourceUri could not be resolved: resourceUri='" + resourceUri + "'")
+            }
+        }
+
+        function covnertToUrl(resourceUri) {
+            if (resourceUri.startsWith("ipfs://")) {
+                var ipfsHash = resourceUri.substring(7, resourceUri.length);
+                return hashToURL(ipfsHash);
+            }
+            return null;
+        }
 
         function hashToURL(hash) {
             return "http://localhost:8080/ipfs/" + hash;
-        }
-
-        function ipfsAdd(caller, path) {
-            caller.status = "Loading " + path + "...";
-            caller.hash = "Waiting ...";
-            var url = "http://localhost:5001/api/v0/add"
-            var req = request.post(url, function (err, resp, body) {
-                if (err) {
-                    caller.status = "Err: " + err;
-                } else {
-                    caller.status = "Success: Added " + path;
-                    caller.hash = JSON.parse(body).Hash;
-                }
-            });
-            req.form().append('file', fs.createReadStream(path));
         }
 
         function playAudioAtUrl(caller, player, url) {
             caller.status = "Playing " + url;
             player.src = url;
             player.restart();
+        }
+
+        function payForPlay(contractAddress, contractAbi, pwd, callback) {
+            var account = web3.eth.accounts[0];
+            var ppp = web3.eth.contract(contractAbi).at(contractAddress);
+            var result = web3.personal.unlockAccount(account, pwd, 2);
+            callback.onStatusChange("Unlocked: " + result);
+            if (result) {
+                callback.onStatusChange("Account unlocked, sending transaction...");
+                ppp.play({from: account, value: 1}, function (err, expectedTx) {
+                    if (err) {
+                        callback.onFailure(err);
+                        return;
+                    }
+                    callback.onStatusChange("Waiting for " + expectedTx + " ...");
+                    filter = web3.eth.filter('latest');
+                    var count = 0;
+                    filter.watch(function(error, result) {
+                        if (error) console.log("Error: " + error);
+                        if (result) console.log("Result: " + result);
+                        var receipt = web3.eth.getTransactionReceipt(expectedTx);
+                        callback.onStatusChange("Got receipt: " + receipt);
+                        if (receipt && receipt.transactionHash == expectedTx) {
+                            callback.onSuccess();
+                            filter.stopWatching();
+                        }
+
+                        if (count++ > 3) {
+                            callback.onFailure(new Error("Transaction was not confirmed"));
+                            filter.stopWatching();
+                        }
+                    });
+                });
+            }
+            else {
+                callback.onStatusChange("Invalid account number or password...");
+            }
         }
     </script>
 </dom-module>

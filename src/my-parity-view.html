@@ -16,33 +16,32 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <style include="shared-styles">
             :host {
                 display: block;
-
                 padding: 10px;
-            }
-
-            .bg {
-                background-color: rgba(255, 255, 255, 0.5);
-            }
-
-            .fill {
-                width: 100%;
-                height: 100%;
-                opacity: 1;
             }
 
         </style>
 
-        <div class="bg">
-            <div class="fill">
-                <p>My default account is {{account}}</p>
-                <p>All accounts {{accounts}}</p>
-                <p>My balance is {{balance}}</p>
-                <p>
-                    Mining: {{mining}}<br>
-                    My coinbase is {{coinbase}}
-                </p>
-            </div>
+        <p>My default account is {{account}}</p>
+        <p>All accounts {{accounts}}</p>
+        <p>My balance is {{balance}}</p>
+        <p>
+            Mining: {{mining}}<br>
+            My coinbase is {{coinbase}}<br>
+            Connected: {{connected}}, syncing: {{syncing}}
+        </p>
+
+        <div>
+            <p>Status: {{status}}</p>
+            <paper-button raised on-tap="ready">refreshStatus</paper-button>
+            <paper-button raised on-tap="clear">clear</paper-button>
+            <paper-button raised on-tap="compileSample">compileSample</paper-button>
+            <paper-button raised on-tap="deploySample">deploySample</paper-button>
+            <paper-button raised on-tap="tryPlayInternal">tryPlayInternal</paper-button> <paper-input id="pwd"></paper-input>
+            <p>Compilation result: {{compiled}}</p>
+            <p>Contract address: {{contractAddress}}</p>
+            <p>Contract: {{contract}}</p>
         </div>
+
 
     </template>
 
@@ -50,10 +49,35 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         var Web3 = require('web3');
         var web3 = new Web3();
         web3.setProvider(new web3.providers.HttpProvider('http://localhost:8545'));
+
+        var pianoContract = "0x5Dd8fbbB11F2A41d17EAB57cDA4AA0629E586f07";
+        var abi = JSON.parse('[{"constant":true,"inputs":[],"name":"resourceUrl","outputs":[{"name":"","type":"string"}],"type":"function"},{"constant":true,"inputs":[],"name":"coinsPerPlay","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"type":"function"},{"constant":false,"inputs":[],"name":"play","outputs":[{"name":"url","type":"string"},{"name":"key","type":"string"}],"type":"function"},{"inputs":[{"name":"_coinsPerPlay","type":"uint256"},{"name":"_resourceUrl","type":"string"},{"name":"_resourceKey","type":"string"}],"type":"constructor"}]');
         Polymer({
             is: 'my-parity-view',
             ready: function() {
                 refreshStatus(this);
+            },
+
+            clear: function() {
+                this.coinbase = '';
+                this.mining = '';
+                this.account = '';
+                this.accounts = '';
+                this.balance = '';
+                this.status = '';
+            },
+
+
+            deploySample : function() {
+                deployContract(this);
+            },
+
+            tryPlayInternal : function() {
+                var that = this;
+                payForPlay(pianoContract, abi, this.$.pwd.value,
+                    function(status) { console.log(status); that.status = status },
+                    function()       { console.log("success"); that.status = "Success!"},
+                    function(err)    { console.log(err); that.status = "Failed: " + err});
             }
         });
 
@@ -65,6 +89,45 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             if (web3.eth.accounts.length > 0) {
                 caller.balance = web3.eth.getBalance(web3.eth.accounts[0]);
             }
+            var compilers = web3.eth.getCompilers();
+
+            caller.connected = web3.isConnected();
+            caller.syncing = web3.eth.syncing;
+        }
+
+        function payForPlay(contractAddress, contractAbi, pwd, statusCallback, successCallback, errorCallback) {
+            var account = web3.eth.accounts[0];
+            var ppp = web3.eth.contract(contractAbi).at(contractAddress);
+            var result = web3.personal.unlockAccount(account, pwd, 2);
+            statusCallback("Unlocked: " + result);
+            if (result) {
+                statusCallback("Account unlocked, sending transaction...");
+                ppp.play({from: account, value: 1}, function (err, expectedTx) {
+                    if (err) {
+                        errorCallback(err);
+                        return;
+                    }
+                    statusCallback("Waiting for " + expectedTx + " ...");
+                    filter = web3.eth.filter('latest');
+                    filter.watch(function(error, result) {
+                        var receipt = web3.eth.getTransactionReceipt(expectedTx);
+                        var tx = web3.eth.getTransaction(expectedTx);
+                        statusCallback("Got receipt: " + receipt);
+                        statusCallback("Got tx: " + tx);
+                        if (receipt && receipt.transactionHash == expectedTx) {
+                            successCallback();
+                            filter.stopWatching();
+                        }
+                    });
+                });
+            }
+            else {
+                statusCallback("Invalid account number or password...");
+            }
+        }
+
+        function getBalance(addr) {
+            return web3.eth.getBalance(addr);
         }
     </script>
 </dom-module>
