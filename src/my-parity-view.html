@@ -21,27 +21,44 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         </style>
 
-        <p>My default account is {{account}}</p>
-        <p>All accounts {{accounts}}</p>
-        <p>My balance is {{balance}}</p>
-        <p>
-            Mining: {{mining}}<br>
-            My coinbase is {{coinbase}}<br>
-            Connected: {{connected}}, syncing: {{syncing}}
-        </p>
+        <div class="card">
+            <p>My default account is {{account}}</p>
+            <p>All accounts {{accounts}}</p>
+            <p>My balance is {{balance}}</p>
+            <p>
+                Mining: {{mining}}<br>
+                My coinbase is {{coinbase}}<br>
+                Connected: {{connected}}, syncing: {{syncing}}
+            </p>
+        </div>
 
-        <div>
+        <div class="card">
             <p>Status: {{status}}</p>
             <paper-button raised on-tap="ready">refreshStatus</paper-button>
             <paper-button raised on-tap="clear">clear</paper-button>
             <paper-button raised on-tap="compileSample">compileSample</paper-button>
             <paper-button raised on-tap="deploySample">deploySample</paper-button>
-            <paper-button raised on-tap="tryPlayInternal">tryPlayInternal</paper-button> <paper-input id="pwd"></paper-input>
+            <paper-button raised on-tap="tryPlayInternal">tryPlayInternal</paper-button>
+            <paper-input id="pwd" type="password" label="password"></paper-input>
             <p>Compilation result: {{compiled}}</p>
             <p>Contract address: {{contractAddress}}</p>
             <p>Contract: {{contract}}</p>
         </div>
 
+        <div class="card">
+            <paper-button raised on-tap="showMyMinedBlocks">show my mined blocks</paper-button>
+            <paper-button raised on-tap="showBlock">show block</paper-button> <paper-input id="block" label="block"></paper-input>
+
+            <p>
+            <paper-input id="account" label="account"></paper-input>
+            <paper-button raised on-tap="checkBalance">checkBalance</paper-button>
+            Balance: {{custom_balance}}
+
+            <p>
+            <paper-input id="tx" label="tx"></paper-input>
+            <paper-button raised on-tap="checkTransaction">checkTranaction</paper-button>
+            Balance: {{transaction}}
+        </div>
 
     </template>
 
@@ -49,6 +66,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         var Web3 = require('web3');
         var web3 = new Web3();
         web3.setProvider(new web3.providers.HttpProvider('http://localhost:8545'));
+        var eth = web3.eth;
 
         var pianoContract = "0x5Dd8fbbB11F2A41d17EAB57cDA4AA0629E586f07";
         var abi = JSON.parse('[{"constant":true,"inputs":[],"name":"resourceUrl","outputs":[{"name":"","type":"string"}],"type":"function"},{"constant":true,"inputs":[],"name":"coinsPerPlay","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"type":"function"},{"constant":false,"inputs":[],"name":"play","outputs":[{"name":"url","type":"string"},{"name":"key","type":"string"}],"type":"function"},{"inputs":[{"name":"_coinsPerPlay","type":"uint256"},{"name":"_resourceUrl","type":"string"},{"name":"_resourceKey","type":"string"}],"type":"constructor"}]');
@@ -56,6 +74,22 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             is: 'my-parity-view',
             ready: function() {
                 refreshStatus(this);
+            },
+
+            checkBalance : function() {
+                this.custom_balance = eth.getBalance(this.$.account.value);
+            },
+
+            checkTransaction : function() {
+                this.transaction = JSON.stringify(eth.getTransaction(this.$.tx.value));
+            },
+
+            showMyMinedBlocks : function() {
+                getMyMinedBlocks();
+            },
+
+            showBlock : function() {
+                printBlockByNumber(this.$.block.value);
             },
 
             clear: function() {
@@ -74,7 +108,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
             tryPlayInternal : function() {
                 var that = this;
-                payForPlay(pianoContract, abi, this.$.pwd.value,
+                payForPlayXX(pianoContract, abi, this.$.pwd.value,
                     function(status) { console.log(status); that.status = status },
                     function()       { console.log("success"); that.status = "Success!"},
                     function(err)    { console.log(err); that.status = "Failed: " + err});
@@ -95,7 +129,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             caller.syncing = web3.eth.syncing;
         }
 
-        function payForPlay(contractAddress, contractAbi, pwd, statusCallback, successCallback, errorCallback) {
+        function payForPlayXX(contractAddress, contractAbi, pwd, statusCallback, successCallback, errorCallback) {
             var account = web3.eth.accounts[0];
             var ppp = web3.eth.contract(contractAbi).at(contractAddress);
             var result = web3.personal.unlockAccount(account, pwd, 2);
@@ -126,8 +160,116 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             }
         }
 
-        function getBalance(addr) {
-            return web3.eth.getBalance(addr);
+        function printTransaction(txHash) {
+            var tx = eth.getTransaction(txHash);
+            if (tx != null) {
+                console.log("  tx hash          : " + tx.hash + "\n"
+                        + "   nonce           : " + tx.nonce + "\n"
+                        + "   blockHash       : " + tx.blockHash + "\n"
+                        + "   blockNumber     : " + tx.blockNumber + "\n"
+                        + "   transactionIndex: " + tx.transactionIndex + "\n"
+                        + "   from            : " + tx.from + "\n"
+                        + "   to              : " + tx.to + "\n"
+                        + "   value           : " + tx.value + "\n"
+                        + "   gasPrice        : " + tx.gasPrice + "\n"
+                        + "   gas             : " + tx.gas + "\n"
+                        + "   input           : " + tx.input);
+            }
+        }
+
+        function printBlockByNumber(blockNumber) {
+            printBlock(eth.getBlock(blockNumber));
+        }
+
+        function printBlock(block) {
+            console.log("Block number     : " + block.number + "\n"
+                    + " hash            : " + block.hash + "\n"
+                    + " parentHash      : " + block.parentHash + "\n"
+                    + " nonce           : " + block.nonce + "\n"
+                    + " sha3Uncles      : " + block.sha3Uncles + "\n"
+                    + " logsBloom       : " + block.logsBloom + "\n"
+                    + " transactionsRoot: " + block.transactionsRoot + "\n"
+                    + " stateRoot       : " + block.stateRoot + "\n"
+                    + " miner           : " + block.miner + "\n"
+                    + " difficulty      : " + block.difficulty + "\n"
+                    + " totalDifficulty : " + block.totalDifficulty + "\n"
+                    + " extraData       : " + block.extraData + "\n"
+                    + " size            : " + block.size + "\n"
+                    + " gasLimit        : " + block.gasLimit + "\n"
+                    + " gasUsed         : " + block.gasUsed + "\n"
+                    + " timestamp       : " + block.timestamp + "\n"
+                    + " transactions    : " + block.transactions + "\n"
+                    + " uncles          : " + block.uncles);
+            if (block.transactions != null) {
+                console.log("--- transactions ---");
+                block.transactions.forEach( function(e) {
+                    printTransaction(e);
+                })
+            }
+        }
+
+        function printUncle(block, uncleNumber, uncle) {
+            console.log("Block number     : " + block.number + " , uncle position: " + uncleNumber + "\n"
+                    + " Uncle number    : " + uncle.number + "\n"
+                    + " hash            : " + uncle.hash + "\n"
+                    + " parentHash      : " + uncle.parentHash + "\n"
+                    + " nonce           : " + uncle.nonce + "\n"
+                    + " sha3Uncles      : " + uncle.sha3Uncles + "\n"
+                    + " logsBloom       : " + uncle.logsBloom + "\n"
+                    + " transactionsRoot: " + uncle.transactionsRoot + "\n"
+                    + " stateRoot       : " + uncle.stateRoot + "\n"
+                    + " miner           : " + uncle.miner + "\n"
+                    + " difficulty      : " + uncle.difficulty + "\n"
+                    + " totalDifficulty : " + uncle.totalDifficulty + "\n"
+                    + " extraData       : " + uncle.extraData + "\n"
+                    + " size            : " + uncle.size + "\n"
+                    + " gasLimit        : " + uncle.gasLimit + "\n"
+                    + " gasUsed         : " + uncle.gasUsed + "\n"
+                    + " timestamp       : " + uncle.timestamp + "\n"
+                    + " transactions    : " + uncle.transactions + "\n");
+        }
+
+        function getMinedBlocks(miner, startBlockNumber, endBlockNumber) {
+            if (endBlockNumber == null) {
+                endBlockNumber = eth.blockNumber;
+                console.log("Using endBlockNumber: " + endBlockNumber);
+            }
+            if (startBlockNumber == null) {
+                startBlockNumber = endBlockNumber - 100;
+                if (startBlockNumber < 0) {
+                    startBlockNumber = 0;
+                }
+                console.log("Using startBlockNumber: " + startBlockNumber);
+            }
+            console.log("Searching for miner \"" + miner + "\" within blocks "  + startBlockNumber + " and " + endBlockNumber + "\"");
+
+            for (var i = startBlockNumber; i <= endBlockNumber; i++) {
+                if (i % 1000 == 0) {
+                    console.log("Searching block " + i);
+                }
+                var block = eth.getBlock(i);
+                if (block != null) {
+                    if (block.miner == miner || miner == "*") {
+                        console.log("Found block " + block.number);
+                        printBlock(block);
+                    }
+                    if (block.uncles != null) {
+                        for (var j = 0; j < 2; j++) {
+                            var uncle = eth.getUncle(i, j);
+                            if (uncle != null) {
+                                if (uncle.miner == miner || miner == "*") {
+                                    console.log("Found uncle " + block.number + " uncle " + j);
+                                    printUncle(block, j, uncle);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function getMyMinedBlocks(startBlockNumber, endBlockNumber) {
+            getMinedBlocks(eth.accounts[0], startBlockNumber, endBlockNumber);
         }
     </script>
 </dom-module>

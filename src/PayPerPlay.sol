@@ -31,6 +31,30 @@ contract PayPerPlay {
         _
     }
 
+    function getResourceUrl() constant returns (string) {
+        return resourceUrl;
+    }
+
+    function getSomething() constant returns (string) {
+        return "something";
+    }
+
+    function getBytes() constant returns (bytes32) {
+        return 444;
+    }
+
+    function getNumber() constant returns (uint) {
+        return 54321;
+    }
+
+    function setResourceUrl(string newValue) onlyOwner {
+        resourceUrl = newValue;
+    }
+
+    function kill() onlyOwner{
+        selfdestruct(owner);
+    }
+
     function play() enoughCoins returns (string url, string key) {
         // users can only purchase one play at a time.  don't steal their money
         var toRefund = msg.value - coinsPerPlay;

@@ -25,28 +25,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 height: inherit;
             }
 
-            .flex-end-align {
-                @apply(--layout-vertical);
-                @apply(--layout-end);
-                height: 100%;
-            }
-
             paper-input.my-class {
-                --paper-input-container-color: white;
+                --paper-input-container-color: #333;
             }
         </style>
 
-        <div>
+        <div class="card">
             <paper-input class="my-class" id="contract_id" label="contract_id"></paper-input>
             <paper-input class="my-class" id="pwd" type=password label="account pwd"></paper-input>
             <paper-button raised on-tap="updateAudio">Play</paper-button>
             <paper-button raised on-tap="stopPlaying">Pause</paper-button>
             <p>status: {{status}}</p>
-        </div>
-        <div class="container flex-end-align">
             <paper-audio-player controls autoplay id="player" color="#796E90"></paper-audio-player>
         </div>
-
     </template>
 
     <script>
@@ -91,18 +82,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             var ppp = web3.eth.contract(contractAbi).at(contractAddress);
             var resourceUri = ppp.resourceUrl();
             caller.status = "Resolved to resource: " + resourceUri;
+            console.log("coinsPerPlay: " + ppp.coinsPerPlay());
             console.log("Resolved to resource: " + resourceUri);
             var url = covnertToUrl(resourceUri);
             if (url) {
                 payForPlay(contractAddress, contractAbi, pwd, {
-                    onStatusChange : function(msg) {
-                        console.log(msg)
-                    },
                     onSuccess : function() {
                         playAudioAtUrl(caller, player, url);
                     },
                     onFailure : function(err) {
                         console.log(err)
+                        caller.status = msg;
+                    },
+                    onStatusChange : function(msg) {
+                        console.log(msg)
+                        caller.status = msg;
                     }
                 });
             }
@@ -132,11 +126,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         function payForPlay(contractAddress, contractAbi, pwd, callback) {
             var account = web3.eth.accounts[0];
             var ppp = web3.eth.contract(contractAbi).at(contractAddress);
+
             var result = web3.personal.unlockAccount(account, pwd, 2);
             callback.onStatusChange("Unlocked: " + result);
             if (result) {
                 callback.onStatusChange("Account unlocked, sending transaction...");
-                ppp.play({from: account, value: 1}, function (err, expectedTx) {
+                ppp.play({from: account, value: ppp.coinsPerPlay()}, function (err, expectedTx) {
                     if (err) {
                         callback.onFailure(err);
                         return;
