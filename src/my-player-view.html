@@ -92,7 +92,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     },
                     onFailure : function(err) {
                         console.log(err)
-                        caller.status = msg;
+                        caller.status = err;
                     },
                     onStatusChange : function(msg) {
                         console.log(msg)
@@ -143,6 +143,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                         if (error) console.log("Error: " + error);
                         if (result) console.log("Result: " + result);
                         var receipt = web3.eth.getTransactionReceipt(expectedTx);
+                        var transaction = web3.eth.getTransaction(expectedTx);
+                        if (transaction.gas == receipt.gasUsed) {
+                            // wtf?! This is the only way to check for an error??
+                            callback.onFailure(new Error("Out of gas (or an error was thrown)"));
+                            return;
+                        }
                         callback.onStatusChange("Got receipt: " + receipt);
                         if (receipt && receipt.transactionHash == expectedTx) {
                             callback.onSuccess();
