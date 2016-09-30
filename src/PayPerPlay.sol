@@ -35,22 +35,6 @@ contract PayPerPlay {
         return resourceUrl;
     }
 
-    function getSomething() constant returns (string) {
-        return "something";
-    }
-
-    function getBytes() constant returns (bytes32) {
-        return 444;
-    }
-
-    function getNumber() constant returns (uint) {
-        return 54321;
-    }
-
-    function setResourceUrl(string newValue) onlyOwner {
-        resourceUrl = newValue;
-    }
-
     function kill() onlyOwner{
         selfdestruct(owner);
     }
