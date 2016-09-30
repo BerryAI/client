@@ -38,6 +38,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <p>status: {{status}}</p>
             <paper-audio-player controls autoplay id="player" color="#796E90"></paper-audio-player>
         </div>
+
+        <template is="dom-repeat" items="{{contracts}}">
+            <paper-button raised on-tap="playProvidedContract" contract-id="{{item.contractId}}">Play {{item.name}}</paper-button>
+        </template>
     </template>
 
     <script>
@@ -52,11 +56,31 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         Polymer({
             is: 'my-player-view',
+            ready: function() {
+                this.contracts = [];
+                var that = this;
+                fs.readFile('test-file.json', 'utf8', function (err, data) {
+                    if (err) throw err;
+                    that.contracts = JSON.parse(data);
+                    that.notifyPath('contracts');
+                });
+            },
+            saveContractHistory : function() {
+                console.log("writing file...");
+                fs.writeFile('test-file.json', JSON.stringify(this.contracts), 'utf8');
+                console.log(JSON.stringify(this.contracts));
+            },
             updateAudio: function() {
-                this.playItemById(this.$.contract_id.value);
+                var _contractId = this.$.contract_id.value;
+                this.push('contracts', {contractId: _contractId, name: _contractId});
+                this.playItemById(_contractId);
+                this.saveContractHistory();
             },
             playItem: function(e) {
                 this.playItemById(e.target.getAttribute('play-id'));
+            },
+            playProvidedContract : function(e) {
+                this.playItemById(e.target.contractId);
             },
             playItemById: function(id) {
 //                var url = id.startsWith("http") ? id : hashToURL(id);
@@ -136,26 +160,28 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                         callback.onFailure(err);
                         return;
                     }
-                    callback.onStatusChange("Waiting for " + expectedTx + " ...");
+                    callback.onStatusChange("Waiting for " + expectedTx + " ..." + "(0)");
                     filter = web3.eth.filter('latest');
                     var count = 0;
                     filter.watch(function(error, result) {
                         if (error) console.log("Error: " + error);
                         if (result) console.log("Result: " + result);
+                        count++;
+
                         var receipt = web3.eth.getTransactionReceipt(expectedTx);
                         var transaction = web3.eth.getTransaction(expectedTx);
-                        if (transaction.gas == receipt.gasUsed) {
+                        if (receipt && transaction.gas == receipt.gasUsed) {
                             // wtf?! This is the only way to check for an error??
                             callback.onFailure(new Error("Out of gas (or an error was thrown)"));
                             return;
                         }
-                        callback.onStatusChange("Got receipt: " + receipt);
+                        callback.onStatusChange("Waiting for " + expectedTx + " ..." + "(" + count + ")");
                         if (receipt && receipt.transactionHash == expectedTx) {
                             callback.onSuccess();
                             filter.stopWatching();
                         }
 
-                        if (count++ > 3) {
+                        if (count > 3) {
                             callback.onFailure(new Error("Transaction was not confirmed"));
                             filter.stopWatching();
                         }
