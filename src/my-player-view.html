@@ -15,6 +15,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/paper-audio-player/paper-audio-player.html">
 <link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
 <link rel="import" href="../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../bower_components/paper-tooltip/paper-tooltip.html">
+<link rel="import" href="../bower_components/paper-ripple/paper-ripple.html">
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/neon-animation/neon-animations.html">
 <script src="../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
 
 <dom-module id="my-player-view">
@@ -23,25 +27,124 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             :host {
                 display: block;
                 height: inherit;
+                margin: 20px;
+                color: #aaa
             }
 
             paper-input.my-class {
                 --paper-input-container-color: #333;
             }
+
+            paper-card.recent {
+                max-width: 200px;
+                min-width: 100px;
+                cursor: pointer;
+                --paper-card-header-color: #fff;
+                --paper-card-background-color: rgba(255,255,255,0.8);
+            }
+
+            .playing {
+                margin-bottom: 0px;
+                object-fit: contain;
+            }
+
+            .pause-icon {
+                background-image: url(../images/pause-icon.png);
+                background-size: 100%;
+                background-repeat: no-repeat;
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                top: 0px;
+                left: 0px;
+                z-index: 2;
+            }
+
+            .load-icon {
+                background-image: url(../images/loading.png);
+                background-size: 100%;
+                background-repeat: no-repeat;
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                top: 0px;
+                left: 0px;
+                z-index: 2;
+            }
+
+            h1 {
+                color: #4f4f4f;
+                font-weight: lighter;
+            }
+
+            .title {
+                display: inline-block;
+                margin: 5px;
+            }
+
+            .artist {
+                color: black;
+            }
+
+            .album {
+                font-weight: lighter;
+                font-size: small;
+            }
+
+            .track {
+                font-weight: lighter;
+                font-size: small;
+            }
+
+            .title-details {
+                line-height: 90%;
+                -webkit-margin-before: 0.5em;
+            }
+
+            paper-audio-player {
+                visibility: hidden;
+            }
+
+            .recent-bg {
+                background-size: cover;
+                width: 180px;
+                height:180px
+            }
         </style>
+
+        <h1>New releases</h1>
+        <template is="dom-repeat" items="{{contracts}}" style="position:relative">
+            <div class="title">
+                <paper-card class="recent" elevation="5" on-tap="playProvidedContract" contract-id="{{item.contractId}}">
+                    <div class="recent-bg" style="background-image: url('{{item.img}}');"></div>
+                    <div class="pause-icon" hidden$="{{!item.playing}}"></div>
+                    <div class="load-icon" hidden$="{{!item.loading}}"></div>
+                    <paper-ripple fit></paper-ripple>
+                </paper-card>
+                <p class="title-details">
+                    <span class="artist">{{item.artist}}</span><br>
+                    <span class="album">{{item.album}}<br>
+                    <span class="track">{{item.track}}<br>
+                </p>
+            </div>
+        </template>
 
         <div class="card">
             <paper-input class="my-class" id="contract_id" label="contract_id"></paper-input>
-            <paper-input class="my-class" id="pwd" type=password label="account pwd"></paper-input>
-            <paper-button raised on-tap="updateAudio">Play</paper-button>
+            <paper-button raised on-tap="playCustomAudio">Play</paper-button>
             <paper-button raised on-tap="stopPlaying">Pause</paper-button>
             <p>status: {{status}}</p>
-            <paper-audio-player controls autoplay id="player" color="#796E90"></paper-audio-player>
         </div>
 
-        <template is="dom-repeat" items="{{contracts}}">
-            <paper-button raised on-tap="playProvidedContract" contract-id="{{item.contractId}}">Play {{item.name}}</paper-button>
-        </template>
+            <paper-dialog id="actions">
+                <h2>Confirm</h2>
+                <paper-input class="my-class" id="pwd" type=password label="password"></paper-input>
+                <div class="buttons">
+                    <paper-button dialog-dismiss>Decline</paper-button>
+                    <paper-button dialog-confirm autofocus on-tap="updateAudio">Accept</paper-button>
+                </div>
+            </paper-dialog>
+        <paper-audio-player controls autoplay id="player" color="#796E90"></paper-audio-player>
     </template>
 
     <script>
@@ -50,6 +153,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         var Web3 = require('web3');
         var web3 = new Web3();
         web3.setProvider(new web3.providers.HttpProvider('http://localhost:8545'));
+        var pendingContract;
+        var currentModel;
 
         // need to get this from the catalog, I think
         var abi = JSON.parse('[{"constant":true,"inputs":[],"name":"resourceUrl","outputs":[{"name":"","type":"string"}],"type":"function"},{"constant":true,"inputs":[],"name":"coinsPerPlay","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"type":"function"},{"constant":false,"inputs":[],"name":"play","outputs":[{"name":"url","type":"string"},{"name":"key","type":"string"}],"type":"function"},{"inputs":[{"name":"_coinsPerPlay","type":"uint256"},{"name":"_resourceUrl","type":"string"},{"name":"_resourceKey","type":"string"}],"type":"constructor"}]');
@@ -65,22 +170,43 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     that.notifyPath('contracts');
                 });
             },
+            showDialog : function() {
+                this.$.actions.open();
+            },
             saveContractHistory : function() {
                 console.log("writing file...");
                 fs.writeFile('test-file.json', JSON.stringify(this.contracts), 'utf8');
                 console.log(JSON.stringify(this.contracts));
             },
-            updateAudio: function() {
+            playCustomAudio : function() {
                 var _contractId = this.$.contract_id.value;
-                this.push('contracts', {contractId: _contractId, name: _contractId});
-                this.playItemById(_contractId);
+                this.push('contracts', {contractId: _contractId, album: "Album", artist: "Artist", track: "track", img: "../images/tree.jpg"});
                 this.saveContractHistory();
+                this.pendingContract = _contractId;
+                this.showDialog();
+            },
+            updateAudio: function() {
+                this.playItemById(this.pendingContract);
+                currentModel.set('item.loading', true);
             },
             playItem: function(e) {
                 this.playItemById(e.target.getAttribute('play-id'));
             },
             playProvidedContract : function(e) {
-                this.playItemById(e.target.contractId);
+                if (currentModel === e.model && currentModel.item.playing) {
+                    currentModel.set('item.playing', false);
+                    this.stopPlaying();
+                    currentModel = null;
+                }
+                else {
+                    if (currentModel && currentModel.item.playing) {
+                        currentModel.set('item.playing', false);
+                    }
+                    currentModel = e.model;
+                    this.pendingContract = currentModel.item.contractId;
+                    this.$.contract_id.value = this.pendingContract; // just for my sanity
+                    this.showDialog();
+                }
             },
             playItemById: function(id) {
 //                var url = id.startsWith("http") ? id : hashToURL(id);
@@ -102,6 +228,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             return abi;
         }
 
+        function debug(e) {
+            console.log(e);
+        }
+
         function playContractAudio(caller, player, contractAddress, contractAbi, pwd) {
             var ppp = web3.eth.contract(contractAbi).at(contractAddress);
             var resourceUri = ppp.resourceUrl();
@@ -112,9 +242,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             if (url) {
                 payForPlay(contractAddress, contractAbi, pwd, {
                     onSuccess : function() {
+                        currentModel.set('item.loading', false);
+                        currentModel.set('item.playing', true);
                         playAudioAtUrl(caller, player, url);
                     },
                     onFailure : function(err) {
+                        currentModel.set('item.loading', false);
+                        currentModel.set('item.playing', false);
                         console.log(err)
                         caller.status = err;
                     },

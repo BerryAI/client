@@ -24,37 +24,70 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 <dom-module id="my-app">
   <template>
-    <style is="custom-styl">
+    <style is="custom-style">
       :host {
         --app-primary-color: #4285f4;
         --app-secondary-color: white;
-
         display: block;
+      }
+
+      body {
+        background-color: #212121;
       }
 
       app-header {
         color: white;
         opacity: 0.5;
       }
+
       .drawer-list {
-        margin: 0 20px;
+        margin: 5px 10px;
+      }
+
+      app-drawer-layout {
+        margin: 5px 10px;
+        background-image: url(../images/color-bg.jpg);
+        background-size: cover;
+      }
+
+      app-drawer::shadow #contentContainer {
+        background-color: #212121;
+      }
+
+      app-toolbar {
+        color: #7e7e7e;
+      }
+
+      h3 {
+        padding: 0 16px;
+        color: #7e7e7e;
+        font-weight: lighter;
+        font-variant-caps: all-petite-caps;
+        -webkit-margin-after: 0;
       }
 
       .drawer-list a {
         display: block;
         padding: 0 16px;
         text-decoration: none;
-        line-height: 40px;
+        line-height: 25px;
+        color: #aaaaaa;
+        font-weight: lighter;
       }
 
       iron-pages {
         height: 100%
       }
 
-      .drawer-list a.iron-selected {
-        color: black;
+      .user {
+        margin: 10px;
+        color: #7e7e7e
+      }
 
-        font-weight: bold;
+      .drawer-list a.iron-selected {
+        color: #eee;
+        background-color: #2c2c2c;
+        font-weight: lighter;
       }
     </style>
 
@@ -68,23 +101,37 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <app-drawer-layout fullbleed>
       <!-- Drawer content -->
       <app-drawer>
-        <app-toolbar>Menu</app-toolbar>
+        <div class="user">
+          <span>Danp</span><br>
+          <span>12345.5</span>
+        </div>
         <iron-selector selected="[[page]]" attr-for-selected="name" class="drawer-list" role="navigation">
-          <a name="player-view" href="/player-view">Player</a>
-          <a name="sample-view" href="/sample-view">Upload</a>
-          <a name="parity-view" href="/parity-view">Coins</a>
+          <h3>Categories</h3>
+          <a name="player-view" href="/player-view">Genres</a>
+          <a name="musicians-view" href="/player-view">Musicians</a>
+          <a name="new-release-view" href="/player-view">New Releases</a>
+
+          <h3>Chat</h3>
+          <a>Bob Dylan</a>
+          <a>Darude</a>
+
+          <h3>Musician Panel</h3>
+          <a name="sample-view" href="/sample-view">Publish</a>
+          <a>Released</a>
+          <a>All</a>
+          <a name="parity-view" href="/parity-view">Settings</a>
+
         </iron-selector>
       </app-drawer>
 
       <!-- Main content -->
       <app-header-layout has-scrolling-region>
 
-        <app-header condenses reveals effects="waterfall">
-          <app-toolbar>
-            <paper-icon-button icon="menu" drawer-toggle></paper-icon-button>
-            <div main-title>Musicoin</div>
-          </app-toolbar>
-        </app-header>
+        <!--<app-header condenses reveals effects="waterfall">-->
+          <!--<app-toolbar>-->
+            <!--<paper-icon-button icon="menu" drawer-toggle></paper-icon-button>-->
+          <!--</app-toolbar>-->
+        <!--</app-header>-->
 
         <iron-pages
             selected="[[page]]"
