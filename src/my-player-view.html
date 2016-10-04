@@ -19,11 +19,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/paper-ripple/paper-ripple.html">
 <link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
 <link rel="import" href="../bower_components/neon-animation/neon-animations.html">
+<link rel="import" href="../bower_components/paper-toast/paper-toast.html">
 <script src="../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
 
 <dom-module id="my-player-view">
     <template>
-        <style include="shared-styles" is="custom-sty;e">
+        <style include="shared-styles" is="custom-style">
             :host {
                 display: block;
                 height: inherit;
@@ -110,12 +111,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 width: 180px;
                 height:180px
             }
+
+            #toast {
+                position: fixed;
+                right: 2em;
+                text-align: right;
+            }
         </style>
 
         <h1>New releases</h1>
         <template is="dom-repeat" items="{{contracts}}" style="position:relative">
             <div class="title">
-                <paper-card class="recent" elevation="5" on-tap="playProvidedContract" contract-id="{{item.contractId}}">
+                <paper-card class="recent" animated="true" elevation="3" on-tap="playProvidedContract" contract-id="{{item.contractId}}">
                     <div class="recent-bg" style="background-image: url('{{item.img}}');"></div>
                     <div class="pause-icon" hidden$="{{!item.playing}}"></div>
                     <div class="load-icon" hidden$="{{!item.loading}}"></div>
@@ -127,6 +134,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     <span class="track">{{item.track}}<br>
                 </p>
             </div>
+
         </template>
 
         <div class="card">
@@ -145,6 +153,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 </div>
             </paper-dialog>
         <paper-audio-player controls autoplay id="player" color="#796E90"></paper-audio-player>
+        <paper-toast id="toast" text="Payment complete" alwaysOnTop="true"></paper-toast>
     </template>
 
     <script>
@@ -169,6 +178,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     that.contracts = JSON.parse(data);
                     that.notifyPath('contracts');
                 });
+                this.$.player.addEventListener('audioEnd', function (e) {
+                    that.clearCurrentModel();
+                });
             },
             showDialog : function() {
                 this.$.actions.open();
@@ -192,11 +204,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             playItem: function(e) {
                 this.playItemById(e.target.getAttribute('play-id'));
             },
+            clearCurrentModel : function() {
+                currentModel.set('item.playing', false);
+                currentModel = null;
+            },
             playProvidedContract : function(e) {
                 if (currentModel === e.model && currentModel.item.playing) {
-                    currentModel.set('item.playing', false);
                     this.stopPlaying();
-                    currentModel = null;
+                    this.clearCurrentModel();
                 }
                 else {
                     if (currentModel && currentModel.item.playing) {
@@ -241,10 +256,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             var url = covnertToUrl(resourceUri);
             if (url) {
                 payForPlay(contractAddress, contractAbi, pwd, {
-                    onSuccess : function() {
+                    onPaymentInitiated : function() {
                         currentModel.set('item.loading', false);
                         currentModel.set('item.playing', true);
                         playAudioAtUrl(caller, player, url);
+                    },
+                    onPaymentComplete : function() {
+                        caller.$.toast.open();
                     },
                     onFailure : function(err) {
                         currentModel.set('item.loading', false);
@@ -294,8 +312,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                         callback.onFailure(err);
                         return;
                     }
+                    callback.onPaymentInitiated();
                     callback.onStatusChange("Waiting for " + expectedTx + " ..." + "(0)");
-                    filter = web3.eth.filter('latest');
+                    var filter = web3.eth.filter('latest');
                     var count = 0;
                     filter.watch(function(error, result) {
                         if (error) console.log("Error: " + error);
@@ -311,7 +330,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                         }
                         callback.onStatusChange("Waiting for " + expectedTx + " ..." + "(" + count + ")");
                         if (receipt && receipt.transactionHash == expectedTx) {
-                            callback.onSuccess();
+                            callback.onPaymentComplete();
                             filter.stopWatching();
                         }
 

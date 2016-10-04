@@ -46,8 +46,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       app-drawer-layout {
         margin: 5px 10px;
-        background-image: url(../images/color-bg.jpg);
-        background-size: cover;
+        background-color: white;
       }
 
       app-drawer::shadow #contentContainer {
@@ -80,8 +79,36 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       .user {
-        margin: 10px;
-        color: #7e7e7e
+        color: #7e7e7e;
+        margin-top: 10px;
+        margin-left: 10px;
+      }
+
+      .user-img {
+        display: table-cell;
+        width: 48px;
+        height: 48px;
+        float: left;
+
+        padding-right: 10px;
+        background-image: url(../images/user.png);
+        background-size: contain;
+        background-repeat: no-repeat;
+      }
+
+      .user-detail {
+        width: auto;
+        display: table-cell;
+      }
+
+      .user-balance {
+        color: #2176bd;
+        font-size: large;
+        text-align: right;
+      }
+
+      .user-name {
+
       }
 
       .drawer-list a.iron-selected {
@@ -102,8 +129,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <!-- Drawer content -->
       <app-drawer>
         <div class="user">
-          <span>Danp</span><br>
-          <span>12345.5</span>
+          <div class="user-img">
+          </div>
+          <div class="user-detail">
+            <div class="user-balance">&#x266E;{{userBalance}}</div>
+            <div class="user-name">Johnny Appleseed</div>
+          </div>
         </div>
         <iron-selector selected="[[page]]" attr-for-selected="name" class="drawer-list" role="navigation">
           <h3>Categories</h3>
@@ -117,8 +148,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
           <h3>Musician Panel</h3>
           <a name="sample-view" href="/sample-view">Publish</a>
-          <a>Released</a>
-          <a>All</a>
+          <a>My Works</a>
+          <a>My Licenses</a>
           <a name="parity-view" href="/parity-view">Settings</a>
 
         </iron-selector>
@@ -148,6 +179,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   </template>
 
   <script>
+    var Web3 = require('web3');
+    var web3 = new Web3();
+    web3.setProvider(new web3.providers.HttpProvider('http://localhost:8545'));
+
     Polymer({
       is: 'my-app',
 
@@ -162,6 +197,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       ready: function() {
         this.page = 'player-view';
+        var that = this;
+        that.updateUserBalance(that);
+        window.setInterval(function() {
+          that.updateUserBalance(that);
+        }, 10000); // should make this event driven
+      },
+
+      updateUserBalance: function(self) {
+        var balance = web3.fromWei(web3.eth.getBalance(web3.eth.accounts[0]), 'ether');
+        var formatted = balance.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        self.userBalance = formatted;
       },
 
       observers: [
