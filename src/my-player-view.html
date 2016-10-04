@@ -303,7 +303,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             var account = web3.eth.accounts[0];
             var ppp = web3.eth.contract(contractAbi).at(contractAddress);
 
-            var result = web3.personal.unlockAccount(account, pwd, 2);
+            var result = web3.personal.unlockAccount(account, pwd, 10);
             callback.onStatusChange("Unlocked: " + result);
             if (result) {
                 callback.onStatusChange("Account unlocked, sending transaction...");
@@ -334,7 +334,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                             filter.stopWatching();
                         }
 
-                        if (count > 3) {
+                        if (count > 5) {
                             callback.onFailure(new Error("Transaction was not confirmed"));
                             filter.stopWatching();
                         }

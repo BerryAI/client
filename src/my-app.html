@@ -206,7 +206,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       updateUserBalance: function(self) {
         var balance = web3.fromWei(web3.eth.getBalance(web3.eth.accounts[0]), 'ether');
-        var formatted = balance.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        var formatted = balance.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         self.userBalance = formatted;
       },
 

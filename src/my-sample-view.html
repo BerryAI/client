@@ -28,6 +28,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <div class="card">
             <paper-input id="file" label="file" type="file"></paper-input>
             <paper-input type=password id="pwd" label="account pwd"></paper-input>
+            <paper-input id="price" label="price (in wei)"></paper-input>
             <paper-input id="gas" label="gas"></paper-input>
 
             <paper-button raised on-tap="deploy">Deploy</paper-button>
@@ -63,7 +64,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 var path = this.$.file.inputElement.value;
                 var gas = parseInt(this.$.gas.value, 10);
                 var pwd = that.$.pwd.value;
-                var coinsPerPlay = 99;
+                var coinsPerPlay = this.$.price.value;
                 var resourceKey = "dogandcatsdontgetalong";
                 var fromAccount = web3.eth.accounts[0];
                 ipfsAdd(this, path,
