@@ -1,4 +1,4 @@
-// 100, "url", 100, ["0x03", "0x02"], [20, 30]
+// 100, "url", ["0x03", "0x02"], [20, 30]
 contract PayPerPlay {
     string public constant contractVersion = "v0.2";
 
@@ -26,7 +26,6 @@ contract PayPerPlay {
     function PayPerPlay(
             uint _coinsPerPlay,
             string _resourceUrl,
-            uint _totalShares,
             address[] _recipients,
             uint[] _shares) {
         owner = msg.sender;
