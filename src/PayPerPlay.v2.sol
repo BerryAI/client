@@ -4,6 +4,7 @@ contract PayPerPlay {
 
     address public owner;
     string public resourceUrl; // e.g. ipfs://<hash>
+    string public metadata;
 
     // license information
     uint public coinsPerPlay;
@@ -16,20 +17,24 @@ contract PayPerPlay {
     uint public playCount;
     uint public totalEarned;
     uint public licenseVersion;
+    uint public metadataVersion;
 
     // events
     event playEvent(uint plays);
     event licenseUpdateEvent(uint version);
     event transferEvent(address oldOwner, address newOwner);
     event resourceUpdateEvent(string oldResource, string newResource);
+    event metadataUpdateEvent(string oldResource, string newResource);
 
     function PayPerPlay(
             uint _coinsPerPlay,
             string _resourceUrl,
+            string _metadata,
             address[] _recipients,
             uint[] _shares) {
         owner = msg.sender;
         resourceUrl = _resourceUrl;
+        metadata = _metadata;
         updateLicense(_coinsPerPlay, _recipients, _shares);
     }
 
@@ -107,6 +112,13 @@ contract PayPerPlay {
 
         licenseVersion++;
         licenseUpdateEvent(licenseVersion);
+    }
+
+    function updateMetadata(string newMetadata) {
+        var oldMetadata = metadata;
+        metadata = newMetadata;
+        metadataVersion++;
+        metadataUpdateEvent(oldMetadata, newMetadata);
     }
 
     function distributeBalance() adminOnly {
