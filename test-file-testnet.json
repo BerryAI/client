@@ -1,0 +1,29 @@
+[
+  {
+    "contractId": "0x85fe7278b4b47af1a782e4e1f60de0046d30abe5",
+    "album": "For Lovers Only",
+    "artist": "Temptations",
+    "track": "My Girl",
+    "img": "../images/temptations.jpg",
+    "loading": false,
+    "playing": false
+  },
+  {
+    "contractId": "0x99c8523f40e207ce35ac7c5bb3021fca481f1b05",
+    "album": "Album",
+    "artist": "Artist",
+    "track": "Piano",
+    "img": "../images/tree.jpg",
+    "loading": false,
+    "playing": false
+  },
+  {
+    "contractId": "0x22a866640beee05c72da320b42c95eeb4fbbc830",
+    "album": "Album",
+    "artist": "Jerry Lewis",
+    "track": "Great Balls of Fire",
+    "img": "../images/lewis.jpg",
+    "loading": false,
+    "playing": false
+  }
+]

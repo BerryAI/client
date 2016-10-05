@@ -117,9 +117,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 right: 2em;
                 text-align: right;
             }
+
         </style>
 
-        <h1>New releases</h1>
+        <h1>New releases
+            <audio autoplay id="player" color="#796E90" onended="clearCurrentModel()"></audio>
+        </h1>
         <template is="dom-repeat" items="{{contracts}}" style="position:relative">
             <div class="title">
                 <paper-card class="recent" animated="true" elevation="3" on-tap="playProvidedContract" contract-id="{{item.contractId}}">
@@ -139,20 +142,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         <div class="card">
             <paper-input class="my-class" id="contract_id" label="contract_id"></paper-input>
-            <paper-button raised on-tap="playCustomAudio">Play</paper-button>
+            <paper-button raised on-tap="addCustomContract">Add</paper-button>
             <paper-button raised on-tap="stopPlaying">Pause</paper-button>
             <p>status: {{status}}</p>
         </div>
 
-            <paper-dialog id="actions">
-                <h2>Confirm</h2>
-                <paper-input class="my-class" id="pwd" type=password label="password"></paper-input>
-                <div class="buttons">
-                    <paper-button dialog-dismiss>Decline</paper-button>
-                    <paper-button dialog-confirm autofocus on-tap="updateAudio">Accept</paper-button>
-                </div>
-            </paper-dialog>
-        <paper-audio-player controls autoplay id="player" color="#796E90"></paper-audio-player>
+        <paper-dialog id="paymentApprovalDialog">
+            <h2>Confirm payment of &#x266E;{{amountToPay}}</h2>
+            <p>Track: '{{trackToPlay}}'</p>
+            <paper-input class="my-class" id="pwd" type=password label="password"></paper-input>
+            <div class="buttons">
+                <paper-button dialog-dismiss>Decline</paper-button>
+                <paper-button id="confirm" dialog-confirm autofocus on-tap="confirmPurchase">Accept</paper-button>
+            </div>
+        </paper-dialog>
         <paper-toast id="toast" text="Payment complete" alwaysOnTop="true"></paper-toast>
     </template>
 
@@ -164,10 +167,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         web3.setProvider(new web3.providers.HttpProvider('http://localhost:8545'));
         var pendingContract;
         var currentModel;
+        var onConfirm;
 
         // need to get this from the catalog, I think
-        var abi = JSON.parse('[{"constant":true,"inputs":[],"name":"resourceUrl","outputs":[{"name":"","type":"string"}],"type":"function"},{"constant":true,"inputs":[],"name":"coinsPerPlay","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"type":"function"},{"constant":false,"inputs":[],"name":"play","outputs":[{"name":"url","type":"string"},{"name":"key","type":"string"}],"type":"function"},{"inputs":[{"name":"_coinsPerPlay","type":"uint256"},{"name":"_resourceUrl","type":"string"},{"name":"_resourceKey","type":"string"}],"type":"constructor"}]');
-
+        var abi = [{"constant":true,"inputs":[],"name":"resourceUrl","outputs":[{"name":"","type":"string"}],"type":"function"},{"constant":false,"inputs":[{"name":"_distributeBalanceFirst","type":"bool"}],"name":"kill","outputs":[],"type":"function"},{"constant":true,"inputs":[],"name":"metadata","outputs":[{"name":"","type":"string"}],"type":"function"},{"constant":true,"inputs":[],"name":"totalShares","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[],"name":"collectPendingPayment","outputs":[],"type":"function"},{"constant":true,"inputs":[],"name":"licenseVersion","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"metadataVersion","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"coinsPerPlay","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"shares","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"totalEarned","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[],"name":"distributeBalance","outputs":[],"type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"type":"function"},{"constant":false,"inputs":[{"name":"newMetadata","type":"string"}],"name":"updateMetadata","outputs":[],"type":"function"},{"constant":false,"inputs":[{"name":"newResourceUrl","type":"string"}],"name":"updateResourceUrl","outputs":[],"type":"function"},{"constant":false,"inputs":[],"name":"play","outputs":[],"type":"function"},{"constant":true,"inputs":[],"name":"playCount","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"contractVersion","outputs":[{"name":"","type":"string"}],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"pendingPayment","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[{"name":"_coinsPerPlay","type":"uint256"},{"name":"_recipients","type":"address[]"},{"name":"_shares","type":"uint256[]"}],"name":"updateLicense","outputs":[],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"recipients","outputs":[{"name":"","type":"address"}],"type":"function"},{"constant":false,"inputs":[{"name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"type":"function"},{"inputs":[{"name":"_coinsPerPlay","type":"uint256"},{"name":"_resourceUrl","type":"string"},{"name":"_metadata","type":"string"},{"name":"_recipients","type":"address[]"},{"name":"_shares","type":"uint256[]"}],"type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"name":"plays","type":"uint256"}],"name":"playEvent","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"version","type":"uint256"}],"name":"licenseUpdateEvent","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"oldOwner","type":"address"},{"indexed":false,"name":"newOwner","type":"address"}],"name":"transferEvent","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"oldResource","type":"string"},{"indexed":false,"name":"newResource","type":"string"}],"name":"resourceUpdateEvent","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"oldResource","type":"string"},{"indexed":false,"name":"newResource","type":"string"}],"name":"metadataUpdateEvent","type":"event"}]
         Polymer({
             is: 'my-player-view',
             ready: function() {
@@ -178,28 +181,38 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     that.contracts = JSON.parse(data);
                     that.notifyPath('contracts');
                 });
-                this.$.player.addEventListener('audioEnd', function (e) {
-                    that.clearCurrentModel();
-                });
             },
-            showDialog : function() {
-                this.$.actions.open();
+            showApprovalDialog : function() {
+                var ppp = web3.eth.contract(getContractAbiFromCatalog(currentModel.item.contractId)).at(currentModel.item.contractId);
+                var weiApproved = ppp.coinsPerPlay();
+                this.amountToPay = web3.fromWei(weiApproved, 'ether');
+                this.trackToPlay = currentModel.item.track;
+                var that = this;
+                onConfirm = function() {
+                    playApprovedItem(that, that.$.player, ppp, that.getUserCredentials(), weiApproved);
+                    currentModel.set('item.loading', true);
+                };
+                this.$.paymentApprovalDialog.open();
             },
             saveContractHistory : function() {
                 console.log("writing file...");
                 fs.writeFile('test-file.json', JSON.stringify(this.contracts), 'utf8');
                 console.log(JSON.stringify(this.contracts));
             },
-            playCustomAudio : function() {
+            addCustomContract : function() {
                 var _contractId = this.$.contract_id.value;
-                this.push('contracts', {contractId: _contractId, album: "Album", artist: "Artist", track: "track", img: "../images/tree.jpg"});
+                var ppp = web3.eth.contract(getContractAbiFromCatalog(_contractId)).at(_contractId);
+                var metadata = JSON.parse(ppp.metadata());
+                this.push('contracts', {
+                    contractId: _contractId,
+                    album: metadata.album,
+                    artist: metadata.artist,
+                    track: metadata.track,
+                    img: covnertToUrl(metadata.artworkUrl)});
                 this.saveContractHistory();
-                this.pendingContract = _contractId;
-                this.showDialog();
             },
-            updateAudio: function() {
-                this.playItemById(this.pendingContract);
-                currentModel.set('item.loading', true);
+            confirmPurchase: function() {
+                onConfirm();
             },
             playItem: function(e) {
                 this.playItemById(e.target.getAttribute('play-id'));
@@ -220,7 +233,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     currentModel = e.model;
                     this.pendingContract = currentModel.item.contractId;
                     this.$.contract_id.value = this.pendingContract; // just for my sanity
-                    this.showDialog();
+                    this.showApprovalDialog();
                 }
             },
             playItemById: function(id) {
@@ -233,7 +246,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 return this.$.pwd.value;
             },
             stopPlaying: function() {
-                this.$.player.playPause();
+                this.$.player.pause();
             }
         })
 
@@ -247,15 +260,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             console.log(e);
         }
 
-        function playContractAudio(caller, player, contractAddress, contractAbi, pwd) {
-            var ppp = web3.eth.contract(contractAbi).at(contractAddress);
+        function playApprovedItem(caller, player, ppp, pwd, weiApproved) {
             var resourceUri = ppp.resourceUrl();
             caller.status = "Resolved to resource: " + resourceUri;
             console.log("coinsPerPlay: " + ppp.coinsPerPlay());
             console.log("Resolved to resource: " + resourceUri);
             var url = covnertToUrl(resourceUri);
             if (url) {
-                payForPlay(contractAddress, contractAbi, pwd, {
+                payForPlay(ppp, pwd, weiApproved, {
                     onPaymentInitiated : function() {
                         currentModel.set('item.loading', false);
                         currentModel.set('item.playing', true);
@@ -297,18 +309,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         function playAudioAtUrl(caller, player, url) {
             caller.status = "Playing " + url;
             player.src = url;
-            player.restart();
+            player.load();
         }
 
-        function payForPlay(contractAddress, contractAbi, pwd, callback) {
+        function payForPlay(ppp, pwd, weiApproved, callback) {
             var account = web3.eth.accounts[0];
-            var ppp = web3.eth.contract(contractAbi).at(contractAddress);
 
             var result = web3.personal.unlockAccount(account, pwd, 10);
             callback.onStatusChange("Unlocked: " + result);
             if (result) {
                 callback.onStatusChange("Account unlocked, sending transaction...");
-                ppp.play({from: account, value: ppp.coinsPerPlay()}, function (err, expectedTx) {
+                ppp.play({from: account, value: weiApproved}, function (err, expectedTx) {
                     if (err) {
                         callback.onFailure(err);
                         return;
