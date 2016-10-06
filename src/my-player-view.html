@@ -206,7 +206,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     if (progress_percent > 70 && pendingPaymentAction) {
                         var tmpPending = pendingPaymentAction;
                         pendingPaymentAction = null;
-                        this.async(tmpPending.commit);
+                        that.async(tmpPending.commit);
                     }
                 });
             },
@@ -285,10 +285,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         })
 
         function clearCurrentModel() {
-            currentModel.set('item.playing', false);
-            currentModel = null;
-            pendingPaymentAction.cancel()
-            pendingPaymentAction = null;
+            if (currentModel) {
+                currentModel.set('item.playing', false);
+                currentModel = null;
+            }
+            if (pendingPaymentAction) {
+                pendingPaymentAction.cancel()
+                pendingPaymentAction = null;
+            }
         }
 
         function onNewLicensePublished(callback) {
