@@ -1,4 +1,46 @@
-// 100, "url", ["0x03", "0x02"], [20, 30]
+contract MusicoinLogger {
+    event playEvent(address sender, uint plays);
+    event licenseUpdateEvent(address sender, uint version);
+    event transferEvent(address sender, address oldOwner, address newOwner);
+    event resourceUpdateEvent(address sender, string oldResource, string newResource);
+    event metadataUpdateEvent(address sender, string oldResource, string newResource);
+
+    modifier noCoins {
+        //if (msg.value > 0) throw;
+        _
+    }
+
+    function MusicCoinLogger() noCoins {
+
+    }
+
+    function logPlayEvent(uint plays) noCoins {
+        playEvent(msg.sender, plays);
+    }
+
+    function logLicenseUpdateEvent(uint version) noCoins {
+        licenseUpdateEvent(msg.sender, version);
+    }
+
+    function logTransferEvent(address oldOwner, address newOwner) noCoins {
+        transferEvent(msg.sender, oldOwner, newOwner);
+    }
+
+    function logResourceUpdateEvent(string oldResource, string newResource) noCoins {
+        resourceUpdateEvent(msg.sender, oldResource, newResource);
+    }
+
+    function logMetadataUpdateEvent(string oldMetadata, string newMetadata) noCoins {
+        metadataUpdateEvent(msg.sender, oldMetadata, newMetadata);
+    }
+
+    function() {
+        throw;
+    }
+}
+
+// "0x22682a1302c7f6358ebe99e14e773ba67e6304b5", 100, "url", "{'test':123}", ["0x03", "0x02"], [20, 30]
+//pragma solidity ^0.4.3;
 contract PayPerPlay {
     string public constant contractVersion = "v0.2";
 
@@ -11,6 +53,7 @@ contract PayPerPlay {
     address[] public recipients;
     uint[] public shares;
     uint public totalShares;
+    MusicoinLogger private logger;
 
     // book keeping
     mapping(address => uint) public pendingPayment;
@@ -24,14 +67,16 @@ contract PayPerPlay {
     event licenseUpdateEvent(uint version);
     event transferEvent(address oldOwner, address newOwner);
     event resourceUpdateEvent(string oldResource, string newResource);
-    event metadataUpdateEvent(string oldResource, string newResource);
+    event metadataUpdateEvent(string oldMetadata, string newMetadata);
 
     function PayPerPlay(
+            address _loggerAddress,
             uint _coinsPerPlay,
             string _resourceUrl,
             string _metadata,
             address[] _recipients,
             uint[] _shares) {
+        logger = MusicoinLogger(_loggerAddress);
         owner = msg.sender;
         resourceUrl = _resourceUrl;
         metadata = _metadata;
@@ -66,6 +111,7 @@ contract PayPerPlay {
         playCount++;
 
         playEvent(playCount);
+        logger.logPlayEvent(playCount);
     }
 
     function collectPendingPayment() noCoins {
@@ -83,12 +129,22 @@ contract PayPerPlay {
         address oldOwner = owner;
         owner = newOwner;
         transferEvent(oldOwner, newOwner);
+        logger.logTransferEvent(oldOwner, newOwner);
     }
 
     function updateResourceUrl(string newResourceUrl) adminOnly {
-        string oldResourceUrl = resourceUrl;
+        string memory oldResourceUrl = resourceUrl;
         resourceUrl = newResourceUrl;
         resourceUpdateEvent(oldResourceUrl, newResourceUrl);
+        logger.logResourceUpdateEvent(oldResourceUrl, newResourceUrl);
+    }
+
+    function updateMetadata(string newMetadata) adminOnly {
+        string memory oldMetadata = metadata;
+        metadata = newMetadata;
+        metadataVersion++;
+        metadataUpdateEvent(oldMetadata, newMetadata);
+        logger.logMetadataUpdateEvent(oldMetadata, newMetadata);
     }
 
     /*
@@ -112,13 +168,7 @@ contract PayPerPlay {
 
         licenseVersion++;
         licenseUpdateEvent(licenseVersion);
-    }
-
-    function updateMetadata(string newMetadata) {
-        var oldMetadata = metadata;
-        metadata = newMetadata;
-        metadataVersion++;
-        metadataUpdateEvent(oldMetadata, newMetadata);
+        logger.logLicenseUpdateEvent(licenseVersion);
     }
 
     function distributeBalance() adminOnly {
