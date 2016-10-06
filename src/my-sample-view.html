@@ -31,6 +31,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <paper-input id="artist" label="artist"></paper-input>
             <paper-input id="album" label="album"></paper-input>
             <paper-input id="track" label="track"></paper-input>
+            <paper-input id="distribution" label="addr1=1, addr2=5"></paper-input>
             <paper-input type=password id="pwd" label="account pwd"></paper-input>
             <paper-input id="price" label="price (in ether)"></paper-input>
             <paper-input id="gas" label="gas"></paper-input>
@@ -84,6 +85,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 var artist = this.$.artist.value;
                 var album = this.$.album.value;
                 var track = this.$.track.value;
+                var recipientsAndShares = parsePairsAndReturn(this.$.distribution.value, ",", "=");
+                var recipients = recipientsAndShares[0];
+                var shares = recipientsAndShares[1];
 
                 var gas = parseInt(this.$.gas.value, 10);
                 var pwd = that.$.pwd.value;
@@ -103,7 +107,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                             function(audioHash) {
                                 that.status = "Added audio file to IPFS: " + audioPath + ", Deploying contract...";
                                 that.hash = audioHash;
-                                deployContractForResource(fromAccount, gas, coinsPerPlay, "ipfs://" + audioHash, metadataString, pwd, {
+                                deployContractForResource(fromAccount, gas, coinsPerPlay, "ipfs://" + audioHash, metadataString, recipients, shares, pwd, {
                                     onSuccess: function(contractAddress) {
                                         that.status = "Success!";
                                         that.contract = contractAddress;
@@ -151,6 +155,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             }
         });
 
+        function parsePairsAndReturn(text, major, minor) {
+            var recipients = [];
+            var shares = [];
+            text.split(major).forEach(function(pair){
+                var leftAndRight = pair.trim().split(minor);
+                recipients.push(leftAndRight[0]);
+                shares.push(leftAndRight[1]);
+            });
+            return [recipients, shares];
+        }
+
         function encrypt(text){
             var cipher = crypt.createCipher(algorithm,"xxxx")
             var crypted = cipher.update(text,'utf8','hex')
@@ -170,7 +185,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             console.log("deployed.transactionHash: " + deployed.transactionHash);
         }
 
-        function deployContractForResource(fromAccount, _gas, _coinsPerPlay, _resourceUrl, _metadata, pwd, callback) {
+        function deployContractForResource(fromAccount, _gas, _coinsPerPlay, _resourceUrl, _metadata, _recipients, _shares, pwd, callback) {
             if (!web3.personal.unlockAccount(fromAccount, pwd, 30)) {
                 callback.onFailure("Invalid password");
                 return;
@@ -182,8 +197,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     _coinsPerPlay,
                     _resourceUrl,
                     _metadata,
-                    [fromAccount],
-                    [1],
+                    _recipients,
+                    _shares,
                     {
                         from: fromAccount,
                         data: code,

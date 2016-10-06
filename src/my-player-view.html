@@ -196,9 +196,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 var that = this;
                 onConfirm = function() {
                     playApprovedItem(that, that.$.player, ppp, that.getUserCredentials(), weiApproved);
-                    currentModel.set('item.loading', true);
                 };
-                this.$.paymentApprovalDialog.open();
+                var pwd = this.getUserCredentials();
+                if (pwd) {
+                    onConfirm(); // skipping this after the first time
+                }
+                else {
+                    this.$.paymentApprovalDialog.open();
+                }
             },
             saveContractHistory : function() {
                 console.log("writing file...");
@@ -225,14 +230,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             playItem: function(e) {
                 this.playItemById(e.target.getAttribute('play-id'));
             },
-            clearCurrentModel : function() {
-                currentModel.set('item.playing', false);
-                currentModel = null;
-            },
             playProvidedContract : function(e) {
                 if (currentModel === e.model && currentModel.item.playing) {
                     this.stopPlaying();
-                    this.clearCurrentModel();
+                    clearCurrentModel();
                 }
                 else {
                     if (currentModel && currentModel.item.playing) {
@@ -257,6 +258,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 this.$.player.pause();
             }
         })
+
+        function clearCurrentModel() {
+            currentModel.set('item.playing', false);
+            currentModel = null;
+        }
 
         function onNewLicensePublished(callback) {
             var logger = web3.eth.contract(loggerAbi).at(loggerAddress);
@@ -302,11 +308,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                         caller.$.toast.open();
                         caller.status = "Payment complete";
                     },
-                    onFailure : function(err) {
+                    onFailure : function(err, isAuthFail) {
                         currentModel.set('item.loading', false);
                         currentModel.set('item.playing', false);
                         console.log(err)
                         caller.status = err;
+                        if (isAuthFail) {
+                            caller.$.pwd.value = '';
+                        }
                     },
                     onStatusChange : function(msg) {
                         console.log(msg)
@@ -379,7 +388,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 });
             }
             else {
-                callback.onStatusChange("Invalid account number or password...");
+                callback.onFailure(new Error("Invalid account number or password..."), true);
             }
         }
     </script>

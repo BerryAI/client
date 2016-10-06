@@ -82,33 +82,37 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         color: #7e7e7e;
         margin-top: 10px;
         margin-left: 10px;
+        width: 100%;
       }
 
       .user-img {
-        display: table-cell;
+        display: inline-flex;
         width: 48px;
         height: 48px;
-        float: left;
-
-        padding-right: 10px;
-        background-image: url(../images/user.png);
-        background-size: contain;
-        background-repeat: no-repeat;
       }
 
-      .user-detail {
-        width: auto;
-        display: table-cell;
-      }
 
       .user-balance {
+        display: block;
         color: #2176bd;
-        font-size: 1.5em;
-        text-align: right;
+        font-size: 2.5em;
+        text-align: center;
+        line-height: 1;
+      }
+
+      .user-balance-label {
+        display: block;
+        color: #7e7e7e;
+        text-align: center;
+        font-size: small;
+        line-height: 1;
       }
 
       .user-name {
-
+        display: inline-block;
+        position: relative;
+        left: 5px;
+        bottom: 20px;
       }
 
       .drawer-list a.iron-selected {
@@ -129,13 +133,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <!-- Drawer content -->
       <app-drawer>
         <div class="user">
-          <div class="user-img">
-          </div>
-          <div class="user-detail">
-            <div class="user-balance">&#x266E;{{userBalance}}</div>
-            <div class="user-name">Johnny Appleseed</div>
-          </div>
+          <img class="user-img" src="../images/user.png">
+          <div class="user-name">Johnny Appleseed</div>
         </div>
+        <div class="user-balance">&#x266E;{{userBalance}}</div>
+        <div class="user-balance-label">balance</div>
         <iron-selector selected="[[page]]" attr-for-selected="name" class="drawer-list" role="navigation">
           <h3>Categories</h3>
           <a name="player-view" href="/player-view">Genres</a>
