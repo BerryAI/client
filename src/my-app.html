@@ -137,7 +137,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <div class="user-name">Johnny Appleseed</div>
         </div>
         <div class="user-balance">&#x266E;{{userBalance}}</div>
-        <div class="user-balance-label">balance</div>
+        <div id=pendingLabel class="user-balance-label">&#x266E;{{pendingPayments}} pending</div>
         <iron-selector selected="[[page]]" attr-for-selected="name" class="drawer-list" role="navigation">
           <h3>Categories</h3>
           <a name="player-view" href="/player-view">Genres</a>
@@ -183,7 +183,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <script>
     var Web3 = require('web3');
     var web3 = new Web3();
+    var BigNumber = require('bignumber.js');
     web3.setProvider(new web3.providers.HttpProvider('http://localhost:8545'));
+    var pendingPayments = new BigNumber(0);
 
     Polymer({
       is: 'my-app',
@@ -207,9 +209,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       updateUserBalance: function(self) {
-        var balance = web3.fromWei(web3.eth.getBalance(web3.eth.accounts[0]), 'ether');
+        var weiBalance = web3.eth.getBalance(web3.eth.accounts[0]);
+        var adjustedWeiBalance = weiBalance.minus(pendingPayments);
+        var balance = web3.fromWei(adjustedWeiBalance, 'ether');
         var formatted = balance.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         self.userBalance = formatted;
+        self.pendingPayments = web3.fromWei(pendingPayments, 'ether');
       },
 
       observers: [
@@ -230,5 +235,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.page = 'player-view';
       }
     });
+
+    function addPendingPayment(value) {
+      pendingPayments = pendingPayments.plus(value);
+      var app = document.querySelector('my-app');
+      app.updateUserBalance(app);
+    }
   </script>
 </dom-module>

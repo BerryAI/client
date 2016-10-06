@@ -169,6 +169,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         var pendingContract;
         var currentModel;
         var onConfirm;
+        var pendingPaymentAction;
 
         // need to get this from the catalog, I think
         var abi = [{"constant":true,"inputs":[],"name":"resourceUrl","outputs":[{"name":"","type":"string"}],"type":"function"},{"constant":false,"inputs":[{"name":"_distributeBalanceFirst","type":"bool"}],"name":"kill","outputs":[],"type":"function"},{"constant":true,"inputs":[],"name":"metadata","outputs":[{"name":"","type":"string"}],"type":"function"},{"constant":true,"inputs":[],"name":"totalShares","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[],"name":"collectPendingPayment","outputs":[],"type":"function"},{"constant":true,"inputs":[],"name":"licenseVersion","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"metadataVersion","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"coinsPerPlay","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"shares","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"totalEarned","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[],"name":"distributeBalance","outputs":[],"type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"type":"function"},{"constant":false,"inputs":[{"name":"newMetadata","type":"string"}],"name":"updateMetadata","outputs":[],"type":"function"},{"constant":false,"inputs":[{"name":"newResourceUrl","type":"string"}],"name":"updateResourceUrl","outputs":[],"type":"function"},{"constant":false,"inputs":[],"name":"play","outputs":[],"type":"function"},{"constant":true,"inputs":[],"name":"playCount","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"contractVersion","outputs":[{"name":"","type":"string"}],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"pendingPayment","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[{"name":"_coinsPerPlay","type":"uint256"},{"name":"_recipients","type":"address[]"},{"name":"_shares","type":"uint256[]"}],"name":"updateLicense","outputs":[],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"recipients","outputs":[{"name":"","type":"address"}],"type":"function"},{"constant":false,"inputs":[{"name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"type":"function"},{"inputs":[{"name":"_coinsPerPlay","type":"uint256"},{"name":"_resourceUrl","type":"string"},{"name":"_metadata","type":"string"},{"name":"_recipients","type":"address[]"},{"name":"_shares","type":"uint256[]"}],"type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"name":"plays","type":"uint256"}],"name":"playEvent","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"version","type":"uint256"}],"name":"licenseUpdateEvent","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"oldOwner","type":"address"},{"indexed":false,"name":"newOwner","type":"address"}],"name":"transferEvent","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"oldResource","type":"string"},{"indexed":false,"name":"newResource","type":"string"}],"name":"resourceUpdateEvent","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"oldResource","type":"string"},{"indexed":false,"name":"newResource","type":"string"}],"name":"metadataUpdateEvent","type":"event"}]
@@ -178,14 +179,35 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             ready: function() {
                 this.contracts = [];
                 var that = this;
-                fs.readFile('test-file.json', 'utf8', function (err, data) {
-                    if (err) throw err;
-                    that.contracts = JSON.parse(data);
-                    that.notifyPath('contracts');
-                });
                 onNewLicensePublished(function(event) {
                     console.log("version: " + event.version);
                     that.addContractByAddress(event.sender);
+                });
+                var loggerContract = web3.eth.contract(loggerAbi).at(loggerAddress);
+                var currentBlock = web3.eth.blockNumber;
+                var filter = loggerContract.licenseUpdateEvent({version: 1}, {fromBlock: currentBlock-100000, toBlock: currentBlock});
+                console.log("currentBlock:" + currentBlock);
+                filter.get(function (error, logs){
+                    logs.forEach(function(log) {
+                        console.log(log.blockNumber);
+                        try {
+                            that.addContractByAddress(log.args.sender);
+                        }
+                        catch (e) {
+                            console.log(e);
+                        }
+                    });
+                });
+
+
+                this.$.player.addEventListener('timeupdate', function() {
+                    var progress_percent = Math.ceil(that.$.player.currentTime / that.$.player.duration * 100);
+                    that.status = "Playing " + progress_percent + "%";
+                    if (progress_percent > 70 && pendingPaymentAction) {
+                        var tmpPending = pendingPaymentAction;
+                        pendingPaymentAction = null;
+                        this.async(tmpPending.commit);
+                    }
                 });
             },
             showApprovalDialog : function() {
@@ -199,7 +221,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 };
                 var pwd = this.getUserCredentials();
                 if (pwd) {
-                    onConfirm(); // skipping this after the first time
+                    // skipping prompt after the first time
+                    this.async(onConfirm);
                 }
                 else {
                     this.$.paymentApprovalDialog.open();
@@ -222,7 +245,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     artist: metadata.artist,
                     track: metadata.track,
                     img: covnertToUrl(metadata.artworkUrl)});
-                this.saveContractHistory();
+//                this.saveContractHistory();
             },
             confirmPurchase: function() {
                 onConfirm();
@@ -238,6 +261,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 else {
                     if (currentModel && currentModel.item.playing) {
                         currentModel.set('item.playing', false);
+                        this.stopPlaying();
+                        clearCurrentModel();
                     }
                     currentModel = e.model;
                     this.pendingContract = currentModel.item.contractId;
@@ -262,6 +287,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         function clearCurrentModel() {
             currentModel.set('item.playing', false);
             currentModel = null;
+            pendingPaymentAction.cancel()
+            pendingPaymentAction = null;
         }
 
         function onNewLicensePublished(callback) {
@@ -293,35 +320,47 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         function playApprovedItem(caller, player, ppp, pwd, weiApproved) {
             var resourceUri = ppp.resourceUrl();
+            var url = covnertToUrl(resourceUri);
+
             caller.status = "Resolved to resource: " + resourceUri;
             console.log("coinsPerPlay: " + ppp.coinsPerPlay());
             console.log("Resolved to resource: " + resourceUri);
-            var url = covnertToUrl(resourceUri);
+            currentModel.set('item.playing', true);
             if (url) {
-                payForPlay(ppp, pwd, weiApproved, {
-                    onPaymentInitiated : function() {
-                        currentModel.set('item.loading', false);
-                        currentModel.set('item.playing', true);
-                        playAudioAtUrl(caller, player, url);
+                addPendingPayment(weiApproved);
+                playAudioAtUrl(caller, player, url);
+                pendingPaymentAction =
+                {
+                    commit: function() {
+                        payForPlay(ppp, pwd, weiApproved, {
+                            onPaymentInitiated: function () {
+                            },
+                            onPaymentComplete: function () {
+                                caller.$.toast.open();
+                                caller.status = "Payment complete";
+                                addPendingPayment(-weiApproved);
+                            },
+                            onFailure: function (err, isAuthFail) {
+                                currentModel.set('item.loading', false);
+                                currentModel.set('item.playing', false);
+                                console.log(err)
+                                caller.status = err;
+                                addPendingPayment(-weiApproved);
+                                if (isAuthFail) {
+                                    caller.$.pwd.value = '';
+                                }
+                            },
+                            onStatusChange: function (msg) {
+                                console.log(msg)
+                                caller.status = msg;
+                            }
+                        });
                     },
-                    onPaymentComplete : function() {
-                        caller.$.toast.open();
-                        caller.status = "Payment complete";
-                    },
-                    onFailure : function(err, isAuthFail) {
-                        currentModel.set('item.loading', false);
-                        currentModel.set('item.playing', false);
-                        console.log(err)
-                        caller.status = err;
-                        if (isAuthFail) {
-                            caller.$.pwd.value = '';
-                        }
-                    },
-                    onStatusChange : function(msg) {
-                        console.log(msg)
-                        caller.status = msg;
+                    cancel: function() {
+                        caller.status = "Canceled";
+                        addPendingPayment(-weiApproved);
                     }
-                });
+                }
             }
             else {
                 console.log("resourceUri could not be resolved: resourceUri='" + resourceUri + "'")
