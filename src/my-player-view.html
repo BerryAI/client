@@ -121,7 +121,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </style>
 
         <h1>New releases
-            <audio autoplay id="player" color="#796E90" onended="clearCurrentModel()"></audio>
+            <!--<audio autoplay id="player" color="#796E90" onended="clearCurrentModel()"></audio>-->
         </h1>
         <template is="dom-repeat" items="{{contracts}}" style="position:relative">
             <div class="title">
@@ -199,9 +199,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     });
                 });
 
-
-                this.$.player.addEventListener('timeupdate', function() {
-                    var progress_percent = Math.ceil(that.$.player.currentTime / that.$.player.duration * 100);
+                getPlayer().addEventListener('timeupdate', function() {
+                    var progress_percent = Math.ceil(getPlayer().currentTime / getPlayer().duration * 100);
                     that.status = "Playing " + progress_percent + "%";
                     if (progress_percent > 70 && pendingPaymentAction) {
                         var tmpPending = pendingPaymentAction;
@@ -217,7 +216,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 this.trackToPlay = currentModel.item.track;
                 var that = this;
                 onConfirm = function() {
-                    playApprovedItem(that, that.$.player, ppp, that.getUserCredentials(), weiApproved);
+                    playApprovedItem(that, getPlayer(), ppp, that.getUserCredentials(), weiApproved);
                 };
                 var pwd = this.getUserCredentials();
                 if (pwd) {
@@ -271,16 +270,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 }
             },
             playItemById: function(id) {
-//                var url = id.startsWith("http") ? id : hashToURL(id);
-//                playAudioAtUrl(this, this.$.player, url);
-                playContractAudio(this, this.$.player, id, getContractAbiFromCatalog(id), this.getUserCredentials());
+                playContractAudio(this, getPlayer(), id, getContractAbiFromCatalog(id), this.getUserCredentials());
             },
             getUserCredentials: function() {
                 // obviously not how this will work...
                 return this.$.pwd.value;
             },
             stopPlaying: function() {
-                this.$.player.pause();
+                getPlayer().pause();
+                getPlayer().src = '';
             }
         })
 
@@ -332,7 +330,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             currentModel.set('item.playing', true);
             if (url) {
                 addPendingPayment(weiApproved);
-                playAudioAtUrl(caller, player, url);
+                playAudioAtUrl(url, currentModel.item.album, currentModel.item.artist, currentModel.item.track);
                 pendingPaymentAction =
                 {
                     commit: function() {
@@ -381,12 +379,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         function hashToURL(hash) {
             return "http://localhost:8080/ipfs/" + hash;
-        }
-
-        function playAudioAtUrl(caller, player, url) {
-            caller.status = "Playing " + url;
-            player.src = url;
-            player.load();
         }
 
         function payForPlay(ppp, pwd, weiApproved, callback) {

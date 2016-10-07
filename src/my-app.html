@@ -20,7 +20,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="../bower_components/iron-selector/iron-selector.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
-<link rel="import" href="my-icons.html">
+<link rel="import" href="../bower_components/paper-progress/paper-progress.html">
+<link rel="import" href="../bower_components/iron-icons/av-icons.html">
+<link rel="import" href="../bower_components/iron-icons/social-icons.html">
+<!--<link rel="import" href="my-icons.html">-->
 
 <dom-module id="my-app">
   <template>
@@ -36,17 +39,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       app-header {
-        color: white;
-        opacity: 0.5;
+        background-color: whitesmoke;
       }
 
       .drawer-list {
         margin: 5px 10px;
       }
 
-      app-drawer-layout {
-        margin: 5px 10px;
-        background-color: white;
+      app-header-layout {
       }
 
       app-drawer::shadow #contentContainer {
@@ -55,6 +55,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       app-toolbar {
         color: #7e7e7e;
+        justify-content: space-between;
+        padding: 0 0;
       }
 
       h3 {
@@ -95,9 +97,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       .user-balance {
         display: block;
         color: #2176bd;
-        font-size: 2.5em;
+        font-size: 2em;
         text-align: center;
         line-height: 1;
+      }
+
+      .user-balance-area {
+        margin-right: 1em;
       }
 
       .user-balance-label {
@@ -120,6 +126,56 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         background-color: #2c2c2c;
         font-weight: lighter;
       }
+
+      paper-progress.audio-progress {
+        --paper-progress-active-color: #2176bd;
+        --paper-progress-secondary-color: var(--paper-light-blue-100);
+        width: 100%;
+        margin-top: 1em;
+      }
+
+      #player {
+        width: 100%;
+      }
+
+      .action-button {
+        width: 3em;
+        height: 3em;
+        --paper-icon-button-ink-color: #2176bd;
+      }
+
+      .play-icon {
+        icon: "av:play-arrow";
+      }
+
+      .pause-icon {
+        icon: "av:pause";
+      }
+
+      .tip-button {
+        width: 2em;
+        height: 2em;
+      }
+
+      .audio-progress-area {
+        flex-grow: 1;
+        margin-left: 5px;
+        margin-right: 5px;
+      }
+
+      .audio-control-area {
+        align-items: center;
+        display: flex;
+        flex-grow: 0.8;
+      }
+
+      .audio-info {
+        width: 100%;
+        color: #7e7e7e;
+        text-align: center;
+        font-size: small;
+      }
+
     </style>
 
     <app-location route="{{route}}"></app-location>
@@ -136,8 +192,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <img class="user-img" src="../images/user.png">
           <div class="user-name">Johnny Appleseed</div>
         </div>
-        <div class="user-balance">&#x266E;{{userBalance}}</div>
-        <div id=pendingLabel class="user-balance-label">&#x266E;{{pendingPayments}} pending</div>
+        <!--<div class="user-balance">&#x266E;{{userBalance}}</div>-->
+        <!--<div id=pendingLabel class="user-balance-label">&#x266E;{{pendingPayments}} pending</div>-->
         <iron-selector selected="[[page]]" attr-for-selected="name" class="drawer-list" role="navigation">
           <h3>Categories</h3>
           <a name="player-view" href="/player-view">Genres</a>
@@ -160,11 +216,29 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <!-- Main content -->
       <app-header-layout has-scrolling-region>
 
-        <!--<app-header condenses reveals effects="waterfall">-->
-          <!--<app-toolbar>-->
-            <!--<paper-icon-button icon="menu" drawer-toggle></paper-icon-button>-->
-          <!--</app-toolbar>-->
-        <!--</app-header>-->
+        <app-header shadow fixed condenses reveals effects="waterfall">
+          <app-toolbar>
+            <paper-icon-button icon="menu" drawer-toggle></paper-icon-button>
+            <audio id="player" autoplay></audio>
+            <div class="audio-control-area">
+              <paper-icon-button id="playButton" icon="av:play-arrow" on-tap="togglePlayState" class="action-button"></paper-icon-button>
+              <!--<paper-icon-button icon="av:pause" class="action-button"></paper-icon-button>-->
+              <div class="audio-progress-area">
+                <paper-progress id="progress" class="audio-progress"></paper-progress>
+                <div class="audio-info">{{audioDescription}}</div>
+              </div>
+              <div>
+                <paper-icon-button icon="icons:thumb-up" class="tip-button action-button"></paper-icon-button>
+                <div class="user-balance-label">tip</div>
+              </div>
+
+            </div>
+            <div class="user-balance-area">
+              <div class="user-balance">&#x266E;{{userBalance}}</div>
+              <div id=pendingLabel class="user-balance-label">&#x266E;{{pendingPayments}} pending</div>
+            </div>
+          </app-toolbar>
+        </app-header>
 
         <iron-pages
             selected="[[page]]"
@@ -186,6 +260,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     var BigNumber = require('bignumber.js');
     web3.setProvider(new web3.providers.HttpProvider('http://localhost:8545'));
     var pendingPayments = new BigNumber(0);
+    var player;
 
     Polymer({
       is: 'my-app',
@@ -202,10 +277,39 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       ready: function() {
         this.page = 'player-view';
         var that = this;
+        player = this.$.player;
         that.updateUserBalance(that);
         window.setInterval(function() {
           that.updateUserBalance(that);
         }, 10000); // should make this event driven
+
+        this.$.player.addEventListener('timeupdate', function() {
+          var progress_percent = getPlayer().currentTime / getPlayer().duration * 100;
+          that.$.progress.value = progress_percent;
+        });
+        this.$.player.addEventListener('playing', function() {
+          that.$.playButton.icon = getPlayer().paused ? 'av:play-arrow' : 'av:pause';
+        });
+        this.$.player.addEventListener('play', function() {
+          console.log("play event");
+          that.$.playButton.icon = getPlayer().paused ? 'av:play-arrow' : 'av:pause';
+        });
+        this.$.player.addEventListener('pause', function() {
+          console.log("pause event");
+          that.$.playButton.icon = getPlayer().paused ? 'av:play-arrow' : 'av:pause';
+        });
+        this.$.player.addEventListener('abort', function() {
+          that.$.playButton.icon = getPlayer().paused ? 'av:play-arrow' : 'av:pause';
+        });
+      },
+
+      togglePlayState: function() {
+        if (getPlayer().paused) {
+          getPlayer().play();
+        }
+        else {
+          getPlayer().pause();
+        }
       },
 
       updateUserBalance: function(self) {
@@ -235,6 +339,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.page = 'player-view';
       }
     });
+
+    // TODO: I know this is horribly wrong.  The problem is, I still don't know what's right.
+    function getPlayer() {
+      return player;
+    }
+
+    function playAudioAtUrl(url, album, artist, track) {
+      player.src = url;
+      player.load();
+      var app = document.querySelector('my-app');
+      app.audioDescription = track + " from " + album + " by " + artist;
+    }
 
     function addPendingPayment(value) {
       pendingPayments = pendingPayments.plus(value);

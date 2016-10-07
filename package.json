@@ -7,6 +7,8 @@
     "start": "C:/Users/Dan/Documents/Projects/MusicCoin/nwjs/nw.exe ."
   },
   "dependencies": {
+    "bignumber": "^1.1.0",
+    "bignumber.js": "^2.4.0",
     "body-parser": "~1.15.1",
     "cookie-parser": "~1.4.3",
     "crypto": "0.0.3",
