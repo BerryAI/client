@@ -328,6 +328,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.$.player.addEventListener('play', updatePlayState);
         this.$.player.addEventListener('pause', updatePlayState);
         this.$.player.addEventListener('abort', updatePlayState);
+
+        setupDebugLogging();
       },
 
       togglePlayState: function() {
@@ -446,10 +448,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             console.log("Payment initiated");
           },
           onPaymentComplete: function () {
+            console.log("Payment success!");
             musicoin.$.successToast.open();
             musicoin.addPendingPayment(-amount);
           },
           onFailure: function (err, isAuthFail) {
+            console.log("Payment failed: " + err + ", authFailed: " + isAuthFail);
             musicoin.$.failureToast.open();
             musicoin.addPendingPayment(-amount);
             if (isAuthFail) {
@@ -584,6 +588,22 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     function clearCurrentTrack() {
       musicoin._clearCurrentTrack();
+    }
+
+    function setupDebugLogging() {
+      var fs = require('fs');
+      var util = require('util');
+      var logFile = fs.createWriteStream('log.txt', { flags: 'a' });
+      // Or 'w' to truncate the file every time the process starts.
+      var logStdout = process.stdout;
+
+      var old = console.log;
+      console.log = function () {
+        old(arguments);
+        logFile.write(util.format.apply(null, arguments) + '\n');
+        logStdout.write(util.format.apply(null, arguments) + '\n');
+      }
+      console.error = console.log;
     }
   </script>
 </dom-module>
