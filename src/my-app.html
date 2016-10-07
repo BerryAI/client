@@ -343,8 +343,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       updateUserBalance: function(self) {
         var weiBalance = web3.eth.getBalance(web3.eth.accounts[0]);
-        var adjustedWeiBalance = weiBalance.minus(pendingPayments);
-        self.userBalance = this.formatAsMusicoin(adjustedWeiBalance);
+        self.userBalance = this.formatAsMusicoin(weiBalance);
         self.pendingPayments = web3.fromWei(pendingPayments, 'ether');
       },
 
