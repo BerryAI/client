@@ -39,7 +39,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       app-header {
-        background-color: whitesmoke;
+        background-color: #212121;
       }
 
       .drawer-list {
@@ -82,13 +82,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       .user {
         color: #7e7e7e;
-        margin-top: 10px;
-        margin-left: 10px;
         width: 100%;
       }
 
       .user-img {
         display: inline-flex;
+        margin-top: 10px;
+        margin-left: 10px;
         width: 48px;
         height: 48px;
       }
@@ -104,6 +104,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       .user-balance-area {
         margin-right: 1em;
+        cursor: pointer;
       }
 
       .user-balance-label {
@@ -174,6 +175,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         color: #7e7e7e;
         text-align: center;
         font-size: small;
+        white-space: nowrap;
       }
 
       .audio-info-track {
@@ -187,7 +189,116 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         text-align: right;
       }
 
+      .login {
+        color: #686868;
+        z-index: 3;
+        position: fixed;
+        top:0;
+        bottom:0;
+        left:0;
+        right:0;
+        background-size: cover;
+        background-image: url(../images/login.jpg);
+        display: flex;
+        justify-content: center;
+
+        -webkit-transition: all 0.5s ease-in-out;
+        -moz-transition: all 0.5s ease-in-out;
+        -ms-transition: all 0.5s ease-in-out;
+        -o-transition: all 0.5s ease-in-out;
+        transition: all 0.5s ease-in-out;
+      }
+
+      .login-elements {
+        position: fixed;
+        top: 50%;
+        left: 20%;
+        width: 30%;
+        height: 25%;
+        padding: 2em;
+        transform: translate(-50%, -50%);
+      }
+
+      .login-text-box {
+        --paper-input-container-color: #686868;
+        --paper-input-container-focus-color: #2176bd;
+        --paper-input-container-input-color: #2176bd;
+      }
+
+      .login-label {
+        font-size: 2em;
+      }
+
+      #detailButton {
+        width: 2em;
+        height: 2em;
+      }
+
+      .detailView {
+        position: fixed;
+        top: 64px;
+        bottom: 0px;
+        left: 0px;
+        right: 0px;
+        z-index: 3;
+        padding: 2em;
+        display: none;
+        background-color: black;
+        color: whitesmoke;
+      }
+
+      .track-detail-image {
+        position: relative;
+        background-size: contain;
+        background-repeat: no-repeat;
+        top: 1em;
+        left: 1em;
+        width: 25%;
+        height: 25%;
+      }
+
+      .track-detail-close {
+        position: absolute;
+        top: 1em;
+        right: 1em;
+        --paper-fab-background: #2176bd;
+      }
+
+      #miniImage {
+        width: 32px;
+        height: 32px;
+        cursor: pointer;
+      }
+
+      #skipLoginButton {
+        color: #2176bd;
+        font-style: italic;
+        cursor: pointer;
+        text-decoration: none;
+      }
     </style>
+
+    <div id=loginWindow class="login">
+      <div class="login-elements">
+        <div class="login-label">Musicoin</div>
+        <paper-input id=loginPwd class="login-text-box" type="password" label="password" on-keydown="checkForEnter"></paper-input>
+        {{account}}
+        <br><br>
+        <a id="skipLoginButton" href="javascript:musicoin.hideLoginWindow()">skip</a>
+      </div>
+    </div>
+
+    <div id="trackDetailView" class="detailView">
+      <h1>{{artist}}: {{track}}</h1>
+      <paper-material class="track-detail-image" style="background-image: url('{{artworkUrl}}');">
+      </paper-material>
+
+      {{contractId}}
+    </div>
+
+    <div id="txDetailView" class="detailView">
+      <h1>Transaction History</h1>
+    </div>
 
     <app-location route="{{route}}"></app-location>
     <app-route
@@ -207,16 +318,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <!--<div id=pendingLabel class="user-balance-label">&#x266E;{{pendingPayments}} pending</div>-->
         <iron-selector selected="[[page]]" attr-for-selected="name" class="drawer-list" role="navigation">
           <h3>Categories</h3>
-          <a name="player-view" href="/player-view">Genres</a>
+          <a name="player-view" href="/player-view">New Releases</a>
           <a name="musicians-view" href="/player-view">Musicians</a>
-          <a name="new-release-view" href="/player-view">New Releases</a>
+          <a name="new-release-view" href="/player-view">Genres</a>
 
           <h3>Chat</h3>
           <a>Bob Dylan</a>
           <a>Darude</a>
 
           <h3>Musician Panel</h3>
-          <a name="sample-view" href="/sample-view">Publish</a>
+          <a name="sample-view" href="/sample-view">Release</a>
           <a>My Works</a>
           <a>My Licenses</a>
           <a name="parity-view" href="/parity-view">Settings</a>
@@ -232,8 +343,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <paper-icon-button icon="menu" drawer-toggle></paper-icon-button>
             <audio id="player" autoplay onended="clearCurrentTrack()"></audio>
             <div class="audio-control-area">
+              <iron-image sizing="contain" id="miniImage" src="{{artworkUrl}}" on-tap="toggleTrackDetailView"></iron-image>
               <paper-icon-button id="playButton" icon="av:play-arrow" on-tap="togglePlayState" class="action-button"></paper-icon-button>
-              <!--<paper-icon-button icon="av:pause" class="action-button"></paper-icon-button>-->
               <div class="audio-progress-area">
                 <div class="audio-info">{{artist}}</div>
                 <paper-progress id="progress" class="audio-progress"></paper-progress>
@@ -243,11 +354,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 <paper-icon-button icon="icons:thumb-up" class="tip-button action-button" on-tap="sendTip"></paper-icon-button>
                 <div class="user-balance-label">tip</div>
               </div>
-
             </div>
             <div class="user-balance-area">
-              <div class="user-balance">&#x266E;{{userBalance}}</div>
-              <div id=pendingLabel class="user-balance-label">&#x266E;{{pendingPayments}} pending</div>
+              <div class="user-balance" onclick="getMusicoin().toggleTxDetailView()">&#x266E;{{userBalance}}</div>
+              <div id=pendingLabel class="user-balance-label" onclick="getMusicoin().toggleTxDetailView()">&#x266E;{{pendingPayments}} pending</div>
             </div>
           </app-toolbar>
         </app-header>
@@ -305,6 +415,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       ready: function() {
         musicoin = getMusicoin();
+        this.account = web3.eth.accounts[0];
         this.page = 'player-view';
         var that = this;
         player = this.$.player;
@@ -330,6 +441,51 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.$.player.addEventListener('abort', updatePlayState);
 
         setupDebugLogging();
+      },
+
+      checkForEnter: function (e) {
+        // check if 'enter' was pressed
+        if (e.keyCode === 13) {
+          this.password = this.$.loginPwd.value;
+          var result = web3.personal.unlockAccount(web3.eth.accounts[0], this.password, 0);
+          if (result) {
+            this.hideLoginWindow();
+          }
+          else {
+            this.$.loginPwd.value = '';
+          }
+        }
+      },
+
+      hideLoginWindow: function() {
+        this.$.loginWindow.style.opacity = 0;
+        window.setTimeout(function(){
+          musicoin.$.loginWindow.style.display = 'none';
+        }, 500);
+      },
+
+      toggleTxDetailView: function() {
+        this.toggle(this.$.txDetailView);
+        this.hide(this.$.trackDetailView);
+      },
+
+      hide: function(target) {
+        target.style.display = 'none';
+      },
+
+      toggle: function(target, beforeShow) {
+        if (target.style.display == 'none' || target.style.display == '') {
+          if (beforeShow) beforeShow();
+          target.style.display = 'block';
+        }
+        else {
+          target.style.display = 'none';
+        }
+      },
+
+      toggleTrackDetailView : function() {
+        this.toggle(this.$.trackDetailView);
+        this.hide(this.$.txDetailView);
       },
 
       togglePlayState: function() {
@@ -523,8 +679,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           }
           callback.onStatusChange("Waiting for " + expectedTx + " ..." + "(" + count + ")");
           if (receipt && receipt.transactionHash == expectedTx) {
-            callback.onPaymentComplete();
-            filter.stopWatching();
+            if (receipt.blockHash) {
+              console.log("Confirmed " + expectedTx);
+              console.log("Block hash " + receipt.blockHash);
+              callback.onPaymentComplete();
+              filter.stopWatching();
+            }
+            else {
+              console.log("Waiting for confirmation of " + expectedTx);
+            }
           }
 
           if (count > 5) {
@@ -543,6 +706,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           this.track = transactionInfo.item.track;
           this.album = transactionInfo.item.album;
           this.artist = transactionInfo.item.artist;
+          this.artworkUrl = transactionInfo.item.img;
           return true;
         }
       },

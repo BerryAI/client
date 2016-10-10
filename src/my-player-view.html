@@ -31,7 +31,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 display: block;
                 height: inherit;
                 margin: 20px;
-                color: #aaa
+                color: #aaa;
             }
 
             paper-input.my-class {
@@ -44,35 +44,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 cursor: pointer;
                 --paper-card-header-color: #fff;
                 --paper-card-background-color: rgba(255,255,255,0.8);
-            }
-
-            .playing {
-                margin-bottom: 0px;
-                object-fit: contain;
-            }
-
-            .pause-icon {
-                background-image: url(../images/pause-icon.png);
-                background-size: 100%;
-                background-repeat: no-repeat;
-                position: absolute;
-                width: 100%;
-                height: 100%;
-                top: 0px;
-                left: 0px;
-                z-index: 2;
-            }
-
-            .load-icon {
-                background-image: url(../images/loading.png);
-                background-size: 100%;
-                background-repeat: no-repeat;
-                position: absolute;
-                width: 100%;
-                height: 100%;
-                top: 0px;
-                left: 0px;
-                z-index: 2;
             }
 
             h1 {
@@ -104,10 +75,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 -webkit-margin-before: 0.5em;
             }
 
-            paper-audio-player {
-                visibility: hidden;
-            }
-
             .recent-bg {
                 background-size: cover;
                 width: 180px;
@@ -120,24 +87,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 right: 2em;
                 --paper-fab-background: #2176bd;
             }
-
         </style>
 
-        <h1>New releases
-            <!--<audio autoplay id="player" color="#796E90" onended="clearCurrentModel()"></audio>-->
-        </h1>
+        <h1>New releases</h1>
         <template is="dom-repeat" items="{{contracts}}" style="position:relative">
             <div class="title">
                 <paper-card class="recent" animated="true" elevation="3" on-tap="playProvidedContract" contract-id="{{item.contractId}}">
                     <div class="recent-bg" style="background-image: url('{{item.img}}');"></div>
-                    <div class="pause-icon" hidden$="{{!item.playing}}"></div>
-                    <div class="load-icon" hidden$="{{!item.loading}}"></div>
                     <paper-ripple fit></paper-ripple>
                 </paper-card>
                 <p class="title-details">
                     <span class="artist">{{item.artist}}</span><br>
-                    <span class="album">{{item.album}}<br>
-                    <span class="track">{{item.track}}<br>
+                    <span class="album">{{item.album}}</span><br>
+                    <span class="track">{{item.track}}</span><br>
                 </p>
             </div>
 
