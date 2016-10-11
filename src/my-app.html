@@ -247,6 +247,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         color: whitesmoke;
       }
 
+      .detailView > h1 {
+        font-weight: 300;
+        margin: 0px;
+      }
+
       .track-detail-image {
         position: relative;
         background-size: contain;
@@ -475,8 +480,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       toggle: function(target, beforeShow) {
         if (target.style.display == 'none' || target.style.display == '') {
-          if (beforeShow) beforeShow();
-          target.style.display = 'block';
+          if (!beforeShow || beforeShow()) {
+            target.style.display = 'block';
+          }
         }
         else {
           target.style.display = 'none';
@@ -484,7 +490,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       toggleTrackDetailView : function() {
-        this.toggle(this.$.trackDetailView);
+        this.toggle(this.$.trackDetailView, function() {
+          return musicoin.currentTransactionInfo;
+        });
         this.hide(this.$.txDetailView);
       },
 
