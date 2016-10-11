@@ -44,6 +44,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 cursor: pointer;
                 --paper-card-header-color: #fff;
                 --paper-card-background-color: rgba(255,255,255,0.8);
+                overflow: hidden;
             }
 
             h1 {
@@ -57,7 +58,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             }
 
             .artist {
-                color: black;
+                color: whitesmoke;
             }
 
             .album {
@@ -87,14 +88,24 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 right: 2em;
                 --paper-fab-background: #2176bd;
             }
+
+            .show-off {
+                width: 200px;
+                height: 250px;
+                position: absolute;
+                top: -50px;
+                left: -50px;
+                transform: rotate(10deg);
+                background: linear-gradient(0deg, rgba(255, 255, 255, 0)50%, rgba(255, 255, 255, 0.5)100%);
+            }
         </style>
 
-        <h1>New releases</h1>
         <template is="dom-repeat" items="{{contracts}}" style="position:relative">
             <div class="title">
                 <paper-card class="recent" animated="true" elevation="3" on-tap="playProvidedContract" contract-id="{{item.contractId}}">
                     <div class="recent-bg" style="background-image: url('{{item.img}}');"></div>
                     <paper-ripple fit></paper-ripple>
+                    <div class="show-off"></div>
                 </paper-card>
                 <p class="title-details">
                     <span class="artist">{{item.artist}}</span><br>
@@ -132,6 +143,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         var web3 = new Web3();
         web3.setProvider(new web3.providers.HttpProvider('http://localhost:8545'));
         var loggerAddress = "0x88Fc62CFAC71041f9704c122293e249110c8efbb";
+        var musicoinCatalogURL = "http://dev.catalog.musicoin.org/api/license/search";
         var musicoin;
 
         // need to get this from the catalog, I think
@@ -148,7 +160,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     that.addContractByAddress(event.sender);
                 });
 
-                this.loadExistingContracts();
+                this.loadContractsFromURL();
+//                this.loadExistingContracts();
             },
             manuallyAddContract : function() {
                 this.$.manualInputDialog.open();
@@ -173,6 +186,26 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     });
                 });
             },
+
+            loadContractsFromURL: function() {
+                var that = this;
+                request({
+                    url: musicoinCatalogURL,
+                    json: true
+                }, function (error, response, body) {
+                    if (!error && response.statusCode === 200) {
+                        // TODOL
+                        body.forEach(function(item) {
+                           that.addContractByAddress(item.contract_id);
+                        });
+                    }
+                    else {
+                        console.log(error);
+                    }
+                })
+            },
+
+
             addContractByAddress: function(_contractId) {
                 var ppp = web3.eth.contract(musicoin.getContractAbiFromCatalog(_contractId)).at(_contractId);
                 var metadata = JSON.parse(ppp.metadata());
@@ -185,8 +218,31 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             },
             playProvidedContract : function(e) {
                 getMusicoin().playSelection(e.model.item);
+            },
+            test: function(msg) {
+                // TODO: the input should just be the items that should be shown
+                // just doing this to demonstrate
+                this.set('contracts', this.rerank(this.contracts.slice(0)));
+            },
+            rerank: function(items) {
+                shuffle(items);
+                return items;
             }
         })
+
+        /**
+         * Shuffles array in place.
+         * @param {Array} a items The array containing the items.
+         */
+        function shuffle(a) {
+            var j, x, i;
+            for (i = a.length; i; i--) {
+                j = Math.floor(Math.random() * i);
+                x = a[i - 1];
+                a[i - 1] = a[j];
+                a[j] = x;
+            }
+        }
 
         function onNewLicensePublished(callback) {
             var logger = web3.eth.contract(loggerAbi).at(loggerAddress);
