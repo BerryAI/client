@@ -662,7 +662,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         callback.onStatusChange("Unlocked: " + result);
         if (result) {
           callback.onStatusChange("Account unlocked, sending transaction...");
-          ppp.play({from: account, value: weiApproved}, function (err, expectedTx) {
+          ppp.play({from: account, value: weiApproved, gas: 940000}, function (err, expectedTx) {
             if (err) {
               callback.onFailure(err);
               return;
