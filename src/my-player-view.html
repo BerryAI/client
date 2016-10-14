@@ -83,13 +83,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 height:180px
             }
 
-            .add-item-button {
-                position: fixed;
-                bottom: 1em;
-                right: 2em;
-                --paper-fab-background: #2176bd;
-            }
-
             .show-off {
                 width: 200px;
                 height: 250px;
@@ -101,23 +94,25 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             }
         </style>
 
-        <template is="dom-repeat" items="{{contracts}}" style="position:relative">
-            <div class="title">
-                <paper-card class="recent" animated="true" elevation="3" on-tap="playProvidedContract" contract-id="{{item.contractId}}">
-                    <div class="recent-bg" style="background-image: url('{{item.img}}');"></div>
-                    <paper-ripple fit></paper-ripple>
-                    <div class="show-off"></div>
-                </paper-card>
-                <p class="title-details">
-                    <span class="artist">{{item.artist}}</span><br>
-                    <span class="album">{{item.album}}</span><br>
-                    <span class="track">{{item.track}}</span><br>
-                </p>
+        <template is="dom-repeat" items="{{contractGroups}}" as="contractGroup" style="position:relative">
+            <div>
+                <h3>{{contractGroup.name}}</h3>
+                <template is="dom-repeat" items="{{contractGroup.contracts}}" style="position:relative">
+                    <div class="title">
+                        <paper-card class="recent" animated="true" elevation="3" on-tap="playProvidedContract" contract-id="{{item.contractId}}">
+                            <div class="recent-bg" style="background-image: url('{{item.img}}');"></div>
+                            <paper-ripple fit></paper-ripple>
+                            <div class="show-off"></div>
+                        </paper-card>
+                        <p class="title-details">
+                            <span class="artist">{{item.artist}}</span><br>
+                            <span class="album">{{item.album}}</span><br>
+                            <span class="track">{{item.track}}</span><br>
+                        </p>
+                    </div>
+                </template>
             </div>
-
         </template>
-
-        <paper-fab mini icon="add" class="add-item-button" on-tap="manuallyAddContract"></paper-fab>
 
         <div class="card" hidden>
             <paper-input class="my-class" id="contract_id" label="contract_id"></paper-input>
@@ -125,136 +120,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <paper-button raised on-tap="stopPlaying">Pause</paper-button>
             <p>status: {{status}}</p>
         </div>
-
-        <paper-dialog id="manualInputDialog">
-            <h2>Enter the contact Id</h2>
-            <paper-input id="inputContractId" label="contractId"></paper-input>
-            <div class="buttons">
-                <paper-button dialog-dismiss>Cancel</paper-button>
-                <paper-button dialog-confirm autofocus on-tap="confirmContract">Accept</paper-button>
-            </div>
-        </paper-dialog>
-
     </template>
 
     <script>
-        var request = require('request');
-        var fs = require('fs');
-        var Web3 = require('web3');
-        var web3 = new Web3();
-        web3.setProvider(new web3.providers.HttpProvider('http://localhost:8545'));
-        var loggerAddress = "0x88Fc62CFAC71041f9704c122293e249110c8efbb";
-        var musicoinCatalogURL = "http://dev.catalog.musicoin.org/api/license/search";
-        var musicoin;
-
-        // need to get this from the catalog, I think
-        var abi = [{"constant":true,"inputs":[],"name":"resourceUrl","outputs":[{"name":"","type":"string"}],"type":"function"},{"constant":false,"inputs":[{"name":"_distributeBalanceFirst","type":"bool"}],"name":"kill","outputs":[],"type":"function"},{"constant":true,"inputs":[],"name":"metadata","outputs":[{"name":"","type":"string"}],"type":"function"},{"constant":true,"inputs":[],"name":"totalShares","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[],"name":"collectPendingPayment","outputs":[],"type":"function"},{"constant":true,"inputs":[],"name":"licenseVersion","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"metadataVersion","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"coinsPerPlay","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"shares","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"totalEarned","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[],"name":"distributeBalance","outputs":[],"type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"type":"function"},{"constant":false,"inputs":[{"name":"newMetadata","type":"string"}],"name":"updateMetadata","outputs":[],"type":"function"},{"constant":false,"inputs":[{"name":"newResourceUrl","type":"string"}],"name":"updateResourceUrl","outputs":[],"type":"function"},{"constant":false,"inputs":[],"name":"play","outputs":[],"type":"function"},{"constant":true,"inputs":[],"name":"playCount","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[],"name":"contractVersion","outputs":[{"name":"","type":"string"}],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"pendingPayment","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[{"name":"_coinsPerPlay","type":"uint256"},{"name":"_recipients","type":"address[]"},{"name":"_shares","type":"uint256[]"}],"name":"updateLicense","outputs":[],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"recipients","outputs":[{"name":"","type":"address"}],"type":"function"},{"constant":false,"inputs":[{"name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"type":"function"},{"inputs":[{"name":"_coinsPerPlay","type":"uint256"},{"name":"_resourceUrl","type":"string"},{"name":"_metadata","type":"string"},{"name":"_recipients","type":"address[]"},{"name":"_shares","type":"uint256[]"}],"type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"name":"plays","type":"uint256"}],"name":"playEvent","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"version","type":"uint256"}],"name":"licenseUpdateEvent","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"oldOwner","type":"address"},{"indexed":false,"name":"newOwner","type":"address"}],"name":"transferEvent","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"oldResource","type":"string"},{"indexed":false,"name":"newResource","type":"string"}],"name":"resourceUpdateEvent","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"oldResource","type":"string"},{"indexed":false,"name":"newResource","type":"string"}],"name":"metadataUpdateEvent","type":"event"}]
-        var loggerAbi = [ { "constant": false, "inputs": [ { "name": "oldOwner", "type": "address" }, { "name": "newOwner", "type": "address" } ], "name": "logTransferEvent", "outputs": [], "type": "function" }, { "constant": false, "inputs": [ { "name": "oldResource", "type": "string" }, { "name": "newResource", "type": "string" } ], "name": "logResourceUpdateEvent", "outputs": [], "type": "function" }, { "constant": false, "inputs": [], "name": "MusicCoinLogger", "outputs": [], "type": "function" }, { "constant": false, "inputs": [ { "name": "version", "type": "uint256" } ], "name": "logLicenseUpdateEvent", "outputs": [], "type": "function" }, { "constant": false, "inputs": [ { "name": "oldMetadata", "type": "string" }, { "name": "newMetadata", "type": "string" } ], "name": "logMetadataUpdateEvent", "outputs": [], "type": "function" }, { "constant": false, "inputs": [ { "name": "plays", "type": "uint256" } ], "name": "logPlayEvent", "outputs": [], "type": "function" }, { "anonymous": false, "inputs": [ { "indexed": false, "name": "sender", "type": "address" }, { "indexed": false, "name": "plays", "type": "uint256" } ], "name": "playEvent", "type": "event" }, { "anonymous": false, "inputs": [ { "indexed": false, "name": "sender", "type": "address" }, { "indexed": false, "name": "version", "type": "uint256" } ], "name": "licenseUpdateEvent", "type": "event" }, { "anonymous": false, "inputs": [ { "indexed": false, "name": "sender", "type": "address" }, { "indexed": false, "name": "oldOwner", "type": "address" }, { "indexed": false, "name": "newOwner", "type": "address" } ], "name": "transferEvent", "type": "event" }, { "anonymous": false, "inputs": [ { "indexed": false, "name": "sender", "type": "address" }, { "indexed": false, "name": "oldResource", "type": "string" }, { "indexed": false, "name": "newResource", "type": "string" } ], "name": "resourceUpdateEvent", "type": "event" }, { "anonymous": false, "inputs": [ { "indexed": false, "name": "sender", "type": "address" }, { "indexed": false, "name": "oldResource", "type": "string" }, { "indexed": false, "name": "newResource", "type": "string" } ], "name": "metadataUpdateEvent", "type": "event" } ];
         Polymer({
             is: 'my-player-view',
             ready: function() {
-                musicoin = getMusicoin();
-                this.contracts = [];
-                var that = this;
-                onNewLicensePublished(function(event) {
-                    console.log("version: " + event.version);
-                    that.addContractByAddress(event.sender);
-                });
-
-                this.loadContractsFromURL();
-//                this.loadExistingContracts();
-            },
-            manuallyAddContract : function() {
-                this.$.manualInputDialog.open();
-            },
-            confirmContract : function() {
-                this.addContractByAddress(this.$.inputContractId.value);
-            },
-            loadExistingContracts: function() {
-                var that = this;
-                var loggerContract = web3.eth.contract(loggerAbi).at(loggerAddress);
-                var currentBlock = web3.eth.blockNumber;
-                var filter = loggerContract.licenseUpdateEvent({version: 1}, {fromBlock: currentBlock-100000, toBlock: currentBlock});
-                filter.get(function (error, logs){
-                    logs.forEach(function(log) {
-                        console.log(log.blockNumber);
-                        try {
-                            that.addContractByAddress(log.args.sender);
-                        }
-                        catch (e) {
-                            console.log(e);
-                        }
-                    });
-                });
-            },
-
-            loadContractsFromURL: function() {
-                var that = this;
-                request({
-                    url: musicoinCatalogURL,
-                    json: true
-                }, function (error, response, body) {
-                    if (!error && response.statusCode === 200) {
-                        // TODOL
-                        body.forEach(function(item) {
-                           that.addContractByAddress(item.contract_id);
-                        });
-                    }
-                    else {
-                        console.log(error);
-                    }
-                })
-            },
-
-
-            addContractByAddress: function(_contractId) {
-                var ppp = web3.eth.contract(musicoin.getContractAbiFromCatalog(_contractId)).at(_contractId);
-                var metadata = JSON.parse(ppp.metadata());
-                this.push('contracts', {
-                    contractId: _contractId,
-                    album: metadata.album,
-                    artist: metadata.artist,
-                    track: metadata.track,
-                    img: musicoin.convertToUrl(metadata.artworkUrl)});
+                this.contractGroups = [];
             },
             playProvidedContract : function(e) {
                 getMusicoin().playSelection(e.model.item);
             },
-            test: function(msg) {
-                // TODO: the input should just be the items that should be shown
-                // just doing this to demonstrate
-                this.set('contracts', this.rerank(this.contracts.slice(0)));
-            },
-            rerank: function(items) {
-                shuffle(items);
-                return items;
+            setDataModel: function(dataModel) {
+                this.set('contractGroups', dataModel);
             }
         })
-
-        /**
-         * Shuffles array in place.
-         * @param {Array} a items The array containing the items.
-         */
-        function shuffle(a) {
-            var j, x, i;
-            for (i = a.length; i; i--) {
-                j = Math.floor(Math.random() * i);
-                x = a[i - 1];
-                a[i - 1] = a[j];
-                a[j] = x;
-            }
-        }
-
-        function onNewLicensePublished(callback) {
-            var logger = web3.eth.contract(loggerAbi).at(loggerAddress);
-            logger.licenseUpdateEvent().watch(function(err, val){
-                if (err) {
-                    console.log(err);
-                }
-                else {
-                    callback(val.args);
-                }
-            });
-        }
     </script>
 </dom-module>

@@ -24,6 +24,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/iron-icons/av-icons.html">
 <link rel="import" href="../bower_components/iron-icons/social-icons.html">
 <script src="web3-connector.js"></script>
+<script src="musicoin-connector.js"></script>
 
 <!--<link rel="import" href="my-icons.html">-->
 
@@ -324,9 +325,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <!--<div id=pendingLabel class="user-balance-label">&#x266E;{{pendingPayments}} pending</div>-->
         <iron-selector selected="[[page]]" attr-for-selected="name" class="drawer-list" role="navigation">
           <h3>Categories</h3>
-          <a name="player-view" href="/player-view/new">New Releases</a>
-          <a name="musicians-view" href="/player-view/coinboard">Coinboard</a>
-          <a name="new-release-view" href="/player-view/favorites">My Favorites</a>
+
+          <template is="dom-repeat" items="{{categories}}" as="category" style="position:relative">
+            <a name="{{category.id}}-view" href="/player-view/{{category.id}}">{{category.name}}</a>
+          </template>
+          <a name="favorites-view" href="/player-view/favorites">My Favorites</a>
 
           <h3>Playlist</h3>
           <a>My Playlists</a>
@@ -403,6 +406,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     var BigNumber = require('bignumber.js');
     web3.setProvider(new web3.providers.HttpProvider('http://localhost:8545'));
     var blockchain = new Web3Connector();
+    var musicoinService = new MusicoinConnector(web3);
     var pendingPayments = new BigNumber(0);
     var player;
     var pendingPaymentAction;
@@ -450,6 +454,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.$.player.addEventListener('abort', updatePlayState);
 
         setupDebugLogging();
+        this.categories = this.getCategories();
+      },
+
+      getCategories: function() {
+        // TODO: Get this list from the server
+        return [
+          {id: "new", name: "New Releases"},
+          {id: "coinboard", name: "Coinboard"}
+        ];
       },
 
       checkForEnter: function (e) {
@@ -600,6 +613,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       sendTip: function() {
         var txInfo = this.currentTransactionInfo;
         if (txInfo) {
+          musicoinService.addFavorite(txInfo.contractId);
           var amount = web3.toWei(1, 'ether');
           this.getPermission("Tip for '" + this.track + "' by " + this.artist, amount, true, function(){
             musicoin.addPendingPayment(amount);
@@ -691,7 +705,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       _subrouteChanged: function(subroute) {
         console.log("subroute: " + subroute);
         if (subroute.prefix == "/player-view") {
-          this.$.browse.test(subroute);
+          var pageName = subroute.path.substring(1); // "/page-name" -> "page-name"
+          musicoinService.loadContractsFromURL(pageName, function (groups) {
+            musicoin.$.browse.setDataModel(groups);
+          })
         }
       },
 
