@@ -81,3 +81,12 @@ MusicoinConnector.prototype.createContractItemFromAddress = function(_contractId
         img: musicoin.convertToUrl(metadata.artworkUrl)
     };
 };
+
+MusicoinConnector.prototype.getCategories = function() {
+    // TODO: Get this list from the server
+    return [
+        {id: "new", name: "New Releases"},
+        {id: "coinboard", name: "Coinboard"},
+        {id: "favorites", name: "My Favorites"}
+    ];
+};

@@ -329,7 +329,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <template is="dom-repeat" items="{{categories}}" as="category" style="position:relative">
             <a name="{{category.id}}-view" href="/player-view/{{category.id}}">{{category.name}}</a>
           </template>
-          <a name="favorites-view" href="/player-view/favorites">My Favorites</a>
 
           <h3>Playlist</h3>
           <a>My Playlists</a>
@@ -455,7 +454,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.$.player.addEventListener('abort', updatePlayState);
 
         setupDebugLogging();
-        this.categories = this.getCategories();
+        this.categories = musicoinService.getCategories();
 
         // TODO: Get rid of this stupid code.
         window.setTimeout(function() {
@@ -463,14 +462,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           that.$.pages.selected = 'player-view';
           that.set('route.path', '/player-view/new');
         }, 1000);
-      },
-
-      getCategories: function() {
-        // TODO: Get this list from the server
-        return [
-          {id: "new", name: "New Releases"},
-          {id: "coinboard", name: "Coinboard"}
-        ];
       },
 
       checkForEnter: function (e) {
