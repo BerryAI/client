@@ -14,8 +14,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../bower_components/paper-audio-player/paper-audio-player.html">
 <link rel="import" href="../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../bower_components/paper-material/paper-material.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 
-<dom-module id="my-sample-view">
+<dom-module id="my-works-view">
     <template>
         <style include="shared-styles">
             :host {
@@ -23,20 +26,93 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 padding: 5px;
                 background-color: transparent;
             }
+
+            .contributor-image {
+              width: 24px;
+              height: 24px;
+              margin-right: 5px;
+            }
+
+          .contributor-tag {
+            display: inline-flex;
+            flex-direction: row;
+            background-color: whitesmoke;
+            border: 5px solid transparent;
+            margin: 2px;
+          }
+
+          .contributor-tag > div {
+            margin-right: 5px;
+          }
+
+          .shares {
+            width: 50px;
+            text-align: right;
+          }
+
+          #deleteButton {
+            width: 24px;
+            height: 24px;
+            padding: 0;
+          }
+
+          .contributor-name {
+            font-weight: bold;
+          }
+
+          .contributor-role {
+            font-style: italic;
+          }
+
+          #contributorInput {
+            display: inline-block;
+          }
+
+          paper-input {
+            display: inline-block;
+          }
+
+          .upload {
+            border: 2px dotted #aaa;
+            width: 300px;
+            height: 300px;
+          }
+
         </style>
 
-        <div class="card">
-            <paper-input id="audioFile" label="audio file" type="file"></paper-input>
-            <paper-input id="imageFile" label="image file" type="file"></paper-input>
+        <div>
+          <div class="card">
+            <h3>Assets</h3>
+            <paper-input id="audioFile" label="audio file" type="file" value="{{selectedAudio}}"></paper-input>
+            <paper-input id="imageFile" label="image file" type="file" value="{{selectedImage}}"></paper-input>
+            <div class="upload">
+              <img src="[[selectedImage]]">
+              Upload
+            </div>
+
+            <h3>Licensing</h3>
             <paper-input id="artist" label="artist"></paper-input>
             <paper-input id="album" label="album"></paper-input>
             <paper-input id="track" label="track"></paper-input>
-            <paper-input id="distribution" label="addr1=1, addr2=5"></paper-input>
-            <paper-input type=password id="pwd" label="account pwd"></paper-input>
             <paper-input id="price" label="price (in ether)"></paper-input>
-            <paper-input id="gas" label="gas"></paper-input>
 
-            <paper-button raised on-tap="deploy">Deploy</paper-button>
+            <h3>Contributor Shares</h3>
+            <template is="dom-repeat" items="{{contributors}}" as="contributor">
+              <paper-material class="contributor-tag">
+                <div class="contributor-name">{{contributor.name}}</div>
+                <div class="contributor-role" contenteditable="true">{{contributor.role}}</div>
+                <input class="shares" type=number value="{{contributor.shares}}"> shares
+                <paper-icon-button id="deleteButton" icon="icons:clear" contributor-index="{{index}}" on-tap="removeContributor"></paper-icon-button>
+              </paper-material>
+            </template>
+            <br>
+            <paper-input id="contributorInput" on-keydown="checkForEnter" label="add contributor"></paper-input>
+            <br>
+            <paper-button raised on-tap="deploy">Release</paper-button>
+          </div>
+
+          <div class="card">
+            <h3>Developer Tools</h3>
             <paper-button raised on-tap="test">Test</paper-button>
             <paper-button raised on-tap="testEncryption">Test Encryption</paper-button>
             <paper-button raised on-tap="testDecryption">Test Decryption</paper-button>
@@ -44,7 +120,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <p>tx: {{tx}}</p>
             <p>contract: {{contract}}</p>
             <p>status: {{status}}</p>
-            <p>gas estimate: {{estimatedGas}}</p>
+          </div>
         </div>
 
         <!--<p>status: {{status}}</p>-->
@@ -74,11 +150,40 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         var algorithm = 'aes-256-ctr';
 
         Polymer({
-            is: 'my-sample-view',
+            is: 'my-works-view',
             ready : function() {
-                this.estimateGas();
+              this.contributors = [];
+              this.estimateGas();
             },
             deploy: function() {
+              var that = this;
+              musicoin.getPermission("Release", 0, true, function(){
+                  that.deployWithPermission();
+              });
+            },
+
+            checkForEnter: function(e) {
+              if (e.keyCode === 13) {
+                var name = this.$.contributorInput.value;
+                var contributor = this.lookupContributorByName(name); // just testing delete function
+                this.$.contributorInput.value = '';
+                this.push('contributors', {name: contributor.name, address: contributor.address, shares: 1, role: contributor.defaultRole});
+              }
+            },
+
+            lookupContributorByName: function(name) {
+              return {
+                name: name,
+                address: "0x" + name,
+                defaultRole: "singer"
+              }; // testing
+            },
+
+            removeContributor: function(e) {
+              this.splice('contributors', e.model.index, 1);
+            },
+
+            deployWithPermission: function() {
                 var that = this;
                 var audioPath = this.$.audioFile.inputElement.value;
                 var imgPath = this.$.imageFile.inputElement.value;
@@ -89,8 +194,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 var recipients = recipientsAndShares[0];
                 var shares = recipientsAndShares[1];
 
-                var gas = parseInt(this.$.gas.value, 10);
-                var pwd = that.$.pwd.value;
+                var gas = 4700000; //parseInt(this.$.gas.value, 10);
+                var pwd = musicoin.password;
                 var coinsPerPlay = web3.toWei(this.$.price.value, 'ether');
                 var fromAccount = web3.eth.accounts[0];
 

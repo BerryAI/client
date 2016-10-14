@@ -1,0 +1,460 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-audio-player/paper-audio-player.html">
+<link rel="import" href="../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../bower_components/paper-material/paper-material.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/iron-icons/av-icons.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+
+<dom-module id="my-contract-editor-view">
+    <template>
+        <style include="shared-styles">
+            :host {
+              display: block;
+              margin: 0px;
+              color: #aaa;
+            }
+
+            .header {
+              color: #aaa;
+              font-weight: lighter;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              font-size: 2em;
+              margin-left: 20px;
+            }
+
+            h3 {
+              font-weight: lighter;
+              margin-bottom: 0px;
+            }
+
+            paper-input {
+              --paper-input-container-color: #aaa;
+              --paper-input-container-focus-color: #aaa;
+              --paper-input-container-invalid-color: #aaa;
+              --paper-input-container-input-color: #aaa;
+            }
+
+            paper-dropdown-menu {
+              --paper-dropdown-menu-container-color: #aaa;
+              --paper-dropdown-menu-container-focus-color: #aaa;
+              --paper-dropdown-menu-container-invalid-color: #aaa;
+              --paper-dropdown-menu-container-input-color: #aaa;
+              --paper-input-container-color: #aaa;
+              --paper-input-container-focus-color: #aaa;
+              --paper-input-container-invalid-color: #aaa;
+              --paper-input-container-input-color: #aaa;
+            }
+
+          .contributor-tag {
+            display: inline-flex;
+            flex-direction: row;
+            background-color: #3e4e3e;
+            border: 5px solid transparent;
+            margin: 2px;
+            align-items: center;
+            min-width: 100px;
+          }
+
+          .royalty-tag {
+            background-color: #3e3e4e;
+          }
+
+          .contributor-tag > div {
+            margin-right: 5px;
+            margin-left: 5px;
+            display: flex;
+            flex-direction: column;
+            line-height: 1;
+          }
+
+          .shares {
+            width: 50px;
+            text-align: right;
+            font-size: 1em;
+            border: none;
+            background: rgba(255,255,255, 0.05);
+            color: #a1a1a1;
+            padding: 2px;
+
+          }
+
+          .deleteButton {
+            width: 16px;
+            height: 16px;
+            padding: 0;
+            border-radius: 2px;
+          }
+
+          [hidden] {
+            display: none;
+          }
+
+          .contributor-name {
+            font-weight: lighter;
+            min-width: 100px;
+            margin-right: 10px;
+            border: none;
+            background: rgba(255,255,255, 0.05);
+            width: 100px;
+            color: #a1a1a1;
+            padding: 2px;
+            font-size: 1em;
+          }
+
+          .contributorInput {
+            display: inline-block;
+            margin-left: 10px;
+            width: 400px;
+          }
+
+          paper-input {
+            display: inline-block;
+          }
+
+          .contributor-area {
+          }
+
+          .work-image {
+            height: 200px;
+            width: 100%;
+            left: 0px;
+            right: 0px;
+            background-color: #333;
+
+          }
+
+          .numeric {
+            text-align: right;
+          }
+
+          .top-section {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-around;
+          }
+
+          .price-area {
+            font-size: 1.5em;
+            text-align: center;
+            background-color: #3e3e3e;
+            border: 20px solid #3e3e3e;
+            border-top-width: 5px;
+            position: absolute;
+            border-radius: 10px;
+            top: 10px;
+            right: 50px;
+            font-weight: lighter;
+          }
+
+          #price {
+            font-size: 2em;
+            width: 100px;
+            background-color: transparent;
+            border: 0;
+            color: whitesmoke;
+          }
+
+          .coin {
+            font-size: 2em;
+          }
+
+          .price-line {
+            display: flex;
+          }
+
+          .main-section {
+            margin-left: 20px;
+            margin-right: 20px;
+          }
+
+          .contributor-address {
+            color: #7e7e7e;
+            font-size: small;
+          }
+
+          .audio-input-section {
+            background-color: #3e3e3e;
+            flex-grow: 0.8;
+            font-weight: lighter;
+            cursor: pointer;
+            display: flex;
+            margin-right: 10px;
+            position: relative;
+          }
+
+          .audio-input-section[hidden] {
+            cursor: default;
+          }
+
+          .music-icon {
+            width: 64px;
+            background-color: #3e4e3e;
+            height: 64px;
+          }
+
+          .music-file-text {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5em;
+            margin-right: 10px;
+            margin-left: 10px;
+          }
+
+          .music-file-size {
+            position: absolute;
+            bottom: 0px;
+            right: 5px;
+            color: #7e7e7e;
+            font-size: small;
+          }
+
+        </style>
+
+        <div>
+          <div class="header" on-tap="printData">{{workName}}</div>
+          <div>
+            <iron-image class="work-image" src="{{workImage}}" sizing="cover"></iron-image>
+            <paper-material class="price-area">
+              Price
+              <div class="price-line">
+                <div class="coin">&#x266E;</div>
+                <input id="price" label="price (in ether)" disabled="[[!editable]]" min=0 value="{{coinsPerPlay}}" type="number" class="numeric"></div>
+            </paper-material>
+          </div>
+
+          <div class="main-section">
+            <div class="top-section">
+              <paper-material class="audio-input-section" onclick="if(contractEditor.editable)contractEditor.$.audioFile.click()">
+                <iron-icon class="music-icon" icon="av:queue-music"></iron-icon>
+                <div class="music-file-text">[[selectedAudioText]]</div>
+                <div class="music-file-size">[[selectedAudioSize]]</div>
+              </paper-material>
+              <input hidden id="audioFile" type="file" value="{{selectedAudio}}" onchange="updateSelectedFile()">
+              <paper-dropdown-menu disabled="[[!editable]]" label="Contract type">
+                <paper-listbox selected="{{contractTypeIdx}}" class="dropdown-content">
+                  <paper-item>PPP</paper-item>
+                </paper-listbox>
+              </paper-dropdown-menu>
+            </div>
+
+            <h3>
+              Royalties
+              <paper-input hidden$={{!editable}} class="contributorInput" on-keydown="addRoyaltyOnEnter" label="add royalty"></paper-input>
+            </h3>
+            <div class="contributor-area">
+              <template is="dom-repeat" items="{{royalties}}" as="royalty">
+                <div>
+                  <paper-material class="royalty-tag contributor-tag">
+                    <input class="contributor-name" disabled="[[!editable]]" on-keyup="updateUserMapping" value="{{royalty.name::input}}">
+                    <input class="shares" min=0 type=number disabled="[[!editable]]" value="{{royalty.amount::input}}">
+                    <div>&#x266E;</div>
+                    <div class="contributor-address">{{royalty.address}}</div>
+                    <paper-icon-button hidden$=[[!editable]] class="deleteButton" icon="icons:clear" on-tap="removeRoyalty"></paper-icon-button>
+                  </paper-material>
+                </div>
+              </template>
+              <br>
+            </div>
+
+            <h3>
+              Contributors
+              <paper-input hidden$={{!editable}} class="contributorInput" on-keydown="addContributorOnEnter" label="add contributor"></paper-input>
+            </h3>
+            <div class="contributor-area">
+              <template is="dom-repeat" items="{{contributors}}" as="contributor">
+                <div>
+                  <paper-material class="contributor-tag">
+                    <div class="contributor-name">{{contributor.name}}</div>
+                    <input class="shares" min=0 type=number disabled="[[!editable]]" value="{{contributor.shares}}">
+                    <div>shares</div>
+                    <div class="contributor-address">{{contributor.address}}</div>
+                    <paper-icon-button hidden$=[[!editable]] class="deleteButton" icon="icons:clear" on-tap="removeContributor"></paper-icon-button>
+                  </paper-material>
+                </div>
+              </template>
+              <br>
+
+            </div>
+          </div>
+        </div>
+    </template>
+
+    <script>
+      const path = require('path');
+      var fs = require("fs");
+      var contractEditor;
+      var addressToNameMapping = {};
+      Polymer({
+        is: 'my-contract-editor-view',
+        ready: function () {
+          contractEditor = this;
+          this.editable = false;
+          this.workName = "Some track name";
+          this.workImage = "../images/tree.jpg"
+          this.contributors = [{name: "Dan", shares: 1, address: "0x1234"}];
+          this.royalties = [];
+          this.coinsPerPlay = 1;
+          this.contractTypeIdx = 0;
+          this.selectedAudioText = 'Click to select a file';
+          this.selectedAudioSize = '';
+        },
+
+        printData: function() {
+          console.log(JSON.stringify(this.getDataObject()));
+        },
+
+        getDataObject: function() {
+          return {
+            contributors: contractEditor.contributors,
+            royalties: contractEditor.royalties,
+            coinsPerPlay: contractEditor.coinsPerPlay,
+            contractType: contractEditor.contractTypeIdx,
+            selectedAudio: contractEditor.selectAudio
+          }
+        },
+
+        updateUserMapping: function (e) {
+          var address = e.model.royalty.address;
+          var name = e.model.royalty.name;
+          addressToNameMapping[address] = name;
+        },
+
+        addContributorOnEnter: function (e) {
+          if (!this.editable) return;
+          var that = this;
+          this.processAndClearOnEnter(e, function(value) {
+            that.addContributor(value);
+          });
+        },
+
+        addRoyaltyOnEnter: function (e) {
+          if (!this.editable) return;
+          var that = this;
+          this.processAndClearOnEnter(e, function(value) {
+            that.addRoyalty(value);
+          });
+        },
+
+        processAndClearOnEnter: function(e, callback) {
+          if (e.keyCode === 13) {
+            var name = e.currentTarget.value;
+            e.currentTarget.value = '';
+            callback(name);
+          }
+        },
+
+        addContributor: function(name) {
+          if (!this.editable) return;
+          var contributor = this.lookupContributorByName(name); // just testing delete function
+          this.push('contributors', {
+            name: contributor.name,
+            address: contributor.address,
+            shares: 1
+          });
+        },
+
+        addRoyalty: function(input) {
+          if (!this.editable) return;
+          var contributor = this.isAddress(input)
+                  ? this.lookupContributorByAddress(input)
+                  : this.lookupContributorByName(input); // just testing delete function
+          if (contributor) {
+            this.push('royalties', {
+              name: contributor.name,
+              address: contributor.address,
+              amount: 1
+            });
+          }
+        },
+
+        isAddress: function(value) {
+          return value.startsWith("0x");
+        },
+
+        lookupContributorByName: function (name) {
+          var found;
+          for (var addr in addressToNameMapping) {
+            if (addressToNameMapping[addr] == name) {
+              found = addr;
+            }
+          }
+          if (found) {
+            return {
+              name: name,
+              address: found
+            };
+          }
+        },
+
+        lookupContributorByAddress: function (addr) {
+          var found = addressToNameMapping[addr] || "(name)";
+          return {
+            name: found,
+            address: addr
+          }; // testing
+        },
+
+        removeContributor: function (e) {
+          if (!this.editable) return;
+          this.splice('contributors', e.model.index, 1);
+        },
+
+        removeRoyalty: function (e) {
+          if (!this.editable) return;
+          this.splice('royalties', e.model.index, 1);
+        },
+
+        selectFile: function(e) {
+          if (!this.editable) return;
+          this.$.audioFile.click(e);
+        },
+
+        updateMapping: function(address) {
+          this.royalties.forEach(function(value) {
+            if (value.address == address) {
+              console.log("Setting mapping: " + value.address + " => " + value.name);
+            }
+          });
+        },
+
+        _updateSelectedFile: function() {
+          if (!this.editable) return;
+          var filePath = contractEditor.$.audioFile.value;
+          if (filePath) {
+            this.set('selectedAudio', filePath);
+
+
+            var stats = fs.statSync(filePath);
+            var fileSizeInBytes = stats["size"];
+            var fileSizeInMegabytes = fileSizeInBytes / 1000000.0
+            this.set('selectedAudioText', path.basename(filePath));
+            this.set('selectedAudioSize', fileSizeInMegabytes.toFixed(1) + " mb");
+          }
+        }
+      });
+
+    function updateSelectedFile() {
+      contractEditor._updateSelectedFile();
+    }
+    </script>
+</dom-module>

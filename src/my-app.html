@@ -23,6 +23,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/paper-progress/paper-progress.html">
 <link rel="import" href="../bower_components/iron-icons/av-icons.html">
 <link rel="import" href="../bower_components/iron-icons/social-icons.html">
+<script src="web3-connector.js"></script>
+
 <!--<link rel="import" href="my-icons.html">-->
 
 <dom-module id="my-app">
@@ -331,9 +333,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <a>Collection</a>
 
           <h3>Musician</h3>
-          <a name="sample-view" href="/sample-view">Release</a>
-          <a>My Works</a>
-          <a>My Licenses</a>
+          <a name="works-view" href="/works-view">My Works</a>
+          <a name="contract-editor-view" href="/contract-editor-view">Editor</a>
 
           <h3>Developer</h3>
           <a name="parity-view" href="/parity-view">Utilities</a>
@@ -374,8 +375,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             fallback-selection="view404"
             role="main">
           <my-player-view id="browse" name="player-view"></my-player-view>
-          <my-sample-view name="sample-view"></my-sample-view>
+          <my-works-view name="works-view"></my-works-view>
           <my-parity-view name="parity-view"></my-parity-view>
+          <my-contract-editor-view name="contract-editor-view"></my-contract-editor-view>
           <my-view404 name="view404"></my-view404>
         </iron-pages>
       </app-header-layout>
@@ -400,6 +402,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     var web3 = new Web3();
     var BigNumber = require('bignumber.js');
     web3.setProvider(new web3.providers.HttpProvider('http://localhost:8545'));
+    var blockchain = new Web3Connector();
     var pendingPayments = new BigNumber(0);
     var player;
     var pendingPaymentAction;
@@ -421,7 +424,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       ready: function() {
         musicoin = getMusicoin();
-        this.account = web3.eth.accounts[0];
+        this.account = blockchain.getDefaultAccount();
         this.page = 'player-view';
         var that = this;
         player = this.$.player;
@@ -454,8 +457,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         if (e.keyCode === 13) {
           this.password = this.$.loginPwd.value;
           try {
-            var result = web3.personal.unlockAccount(web3.eth.accounts[0], this.password, 0);
-            if (result) {
+            if (blockchain.checkAuth(this.password)) {
               this.hideLoginWindow();
               return;
             }
@@ -515,7 +517,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       updateUserBalance: function(self) {
-        var weiBalance = web3.eth.getBalance(web3.eth.accounts[0]);
+        var weiBalance = blockchain.getUserBalance();
         self.userBalance = this.formatAsMusicoin(weiBalance);
         self.pendingPayments = web3.fromWei(pendingPayments, 'ether');
       },
@@ -532,9 +534,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       playSelection: function(item) {
         var ppp = this.getContractInstance(item);
-        var coinsPerPlay = ppp.coinsPerPlay();
+        var coinsPerPlay = blockchain.getCoinsPerPlay(item.contractId);
         var transactionInfo = {
             item: item,
+            contractId: item.contractId,
             ppp: ppp,
             coinsPerPlay: coinsPerPlay
         };
@@ -638,78 +641,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       payForTip: function(ppp, weiApproved, pwd, callback) {
-        var account = web3.eth.accounts[0];
-        var result = web3.personal.unlockAccount(account, pwd, 10);
-        callback.onStatusChange("Unlocked: " + result);
-        if (result) {
-          callback.onStatusChange("Account unlocked, sending transaction...");
-          web3.eth.sendTransaction({from: account, value: weiApproved, to: ppp.address}, function (err, expectedTx) {
-            if (err) {
-              callback.onFailure(err);
-              return;
-            }
-            musicoin.waitForTransaction(expectedTx, callback);
-          });
-        }
-        else {
-          callback.onFailure(new Error("Invalid account number or password..."), true);
-        }
+        blockchain.tip({amount: weiApproved, to: ppp.address}, pwd, callback);
       },
 
       payForPlay: function(ppp, weiApproved, pwd, callback) {
-        var account = web3.eth.accounts[0];
-        var result = web3.personal.unlockAccount(account, pwd, 10);
-        callback.onStatusChange("Unlocked: " + result);
-        if (result) {
-          callback.onStatusChange("Account unlocked, sending transaction...");
-          ppp.play({from: account, value: weiApproved, gas: 940000}, function (err, expectedTx) {
-            if (err) {
-              callback.onFailure(err);
-              return;
-            }
-            musicoin.waitForTransaction(expectedTx, callback);
-          });
-        }
-        else {
-          callback.onFailure(new Error("Invalid account number or password..."), true);
-        }
-      },
-
-      waitForTransaction: function(expectedTx, callback) {
-        callback.onPaymentInitiated();
-        callback.onStatusChange("Waiting for " + expectedTx + " ..." + "(0)");
-        var filter = web3.eth.filter('latest');
-        var count = 0;
-        filter.watch(function(error, result) {
-          if (error) console.log("Error: " + error);
-          if (result) console.log("Result: " + result);
-          count++;
-
-          var receipt = web3.eth.getTransactionReceipt(expectedTx);
-          var transaction = web3.eth.getTransaction(expectedTx);
-          if (receipt && transaction.gas == receipt.gasUsed) {
-            // wtf?! This is the only way to check for an error??
-            callback.onFailure(new Error("Out of gas (or an error was thrown)"));
-            return;
-          }
-          callback.onStatusChange("Waiting for " + expectedTx + " ..." + "(" + count + ")");
-          if (receipt && receipt.transactionHash == expectedTx) {
-            if (receipt.blockHash) {
-              console.log("Confirmed " + expectedTx);
-              console.log("Block hash " + receipt.blockHash);
-              callback.onPaymentComplete();
-              filter.stopWatching();
-            }
-            else {
-              console.log("Waiting for confirmation of " + expectedTx);
-            }
-          }
-
-          if (count > 5) {
-            callback.onFailure(new Error("Transaction was not confirmed"));
-            filter.stopWatching();
-          }
-        });
+        blockchain.ppp({to: ppp.address, amount: weiApproved}, pwd, callback);
       },
 
       playAudio: function (transactionInfo) {
