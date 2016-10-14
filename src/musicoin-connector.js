@@ -18,7 +18,7 @@ MusicoinConnector.prototype.loadContractsFromURL = function(page, callback) {
     }, function (error, response, body) {
         if (!error && response.statusCode === 200) {
             var output = [];
-            output.push(that.createContractGroup({name: page + ": Group 1", contracts: body}));
+            output.push(that.createContractGroup({name: "", contracts: body}));
 
             // TODO: Just faking it until we get more groups
             output.push(that.createContractGroup({name: page + ": Group 2", contracts: body}));

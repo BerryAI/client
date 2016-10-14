@@ -544,6 +544,22 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.updateUserBalance(this);
       },
 
+      playAll: function(items) {
+        this.playlist = (this.playlist || []).concat(items);
+        this.playNext();
+      },
+
+      addToPlaylist: function(item) {
+        this.playist.push(item);
+      },
+
+      playNext: function() {
+        var next = this.playlist.shift();
+        if (next) {
+          this.playSelection(next);
+        }
+      },
+
       playSelection: function(item) {
         var ppp = this.getContractInstance(item);
         var coinsPerPlay = blockchain.getCoinsPerPlay(item.contractId);
@@ -727,6 +743,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     function clearCurrentTrack() {
       musicoin._clearCurrentTrack();
+      musicoin.playNext();
     }
 
     function setupDebugLogging() {
