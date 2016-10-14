@@ -373,6 +373,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </app-header>
 
         <iron-pages
+            id="pages"
             selected="[[page]]"
             attr-for-selected="name"
             fallback-selection="view404"
@@ -455,6 +456,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         setupDebugLogging();
         this.categories = this.getCategories();
+
+        // TODO: Get rid of this stupid code.
+        window.setTimeout(function() {
+          // This sucks.  wtf?!  I can't get the page to select on the left nav.  I hate routes.
+          that.$.pages.selected = 'player-view';
+          that.set('route.path', '/player-view/new');
+        }, 1000);
       },
 
       getCategories: function() {
@@ -698,12 +706,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       ],
 
       _routePageChanged: function(page) {
-        console.log("routePage: " + page);
         this.page = page || 'player-view';
       },
 
       _subrouteChanged: function(subroute) {
-        console.log("subroute: " + subroute);
         if (subroute.prefix == "/player-view") {
           var pageName = subroute.path.substring(1); // "/page-name" -> "page-name"
           musicoinService.loadContractsFromURL(pageName, function (groups) {
@@ -739,13 +745,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       // Or 'w' to truncate the file every time the process starts.
       var logStdout = process.stdout;
 
-      var old = console.log;
-      console.log = function () {
-        old(arguments);
-        logFile.write(util.format.apply(null, arguments) + '\n');
-        logStdout.write(util.format.apply(null, arguments) + '\n');
-      }
-      console.error = console.log;
+//      var old = console.log;
+//      console.log = function () {
+//        old(arguments[0]);
+//        logFile.write(util.format.apply(null, arguments) + '\n');
+//        logStdout.write(util.format.apply(null, arguments) + '\n');
+//      }
+//      console.error = console.log;
     }
   </script>
 </dom-module>
