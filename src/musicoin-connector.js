@@ -1,7 +1,7 @@
 var request = require("request");
 var fs = require("fs");
-function MusicoinConnector(web3) {
-    this.web3 = web3;
+function MusicoinConnector(blockchain) {
+    this.blockchain = blockchain;
     this.musicoinCatalogURL = "http://dev.catalog.musicoin.org/api/license/search";
 }
 
@@ -71,7 +71,7 @@ MusicoinConnector.prototype.createContractGroup = function(serverGroup) {
 };
 
 MusicoinConnector.prototype.createContractItemFromAddress = function(_contractId) {
-    var ppp = this.web3.eth.contract(musicoin.getContractAbiFromCatalog(_contractId)).at(_contractId);
+    var ppp = this.blockchain.getContractInstance(_contractId);
     var metadata = JSON.parse(ppp.metadata());
     return {
         contractId: _contractId,

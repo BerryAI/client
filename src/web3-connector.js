@@ -6,7 +6,7 @@ var genCode = "6060604052604051611f7a380380611f7a8339810160405280805190602001909
 function Web3Connector() {
     this.web3 = new Web3();
     console.log("connecting to web3")
-    this.web3.setProvider(new web3.providers.HttpProvider('http://localhost:8545'));
+    this.web3.setProvider(new this.web3.providers.HttpProvider('http://localhost:8545'));
     this.selectedAccount = this.getDefaultAccount();
 }
 
@@ -75,8 +75,16 @@ Web3Connector.prototype.getContractInstance = function(contractId) {
 };
 
 Web3Connector.prototype.getContractAbiFromCatalog = function(contractId) {
-    // TODO
+    // TODO: The abi of contracts will change depending on the version
     return pppAbi;
+};
+
+Web3Connector.prototype.toMusicCoinUnits = function(indivisibleUnits) {
+    return this.web3.fromWei(indivisibleUnits, 'ether');
+};
+
+Web3Connector.prototype.toIndivisibleUnits = function(musicCoins) {
+    return this.web3.toWei(musicCoins, 'ether');
 };
 
 Web3Connector.prototype.waitForTransaction = function(expectedTx, callback) {
@@ -84,13 +92,14 @@ Web3Connector.prototype.waitForTransaction = function(expectedTx, callback) {
     callback.onStatusChange("Waiting for " + expectedTx + " ..." + "(0)");
     var filter = this.web3.eth.filter('latest');
     var count = 0;
+    var that = this;
     filter.watch(function(error, result) {
         if (error) console.log("Error: " + error);
         if (result) console.log("Result: " + result);
         count++;
 
-        var receipt = this.web3.eth.getTransactionReceipt(expectedTx);
-        var transaction = this.web3.eth.getTransaction(expectedTx);
+        var receipt = that.web3.eth.getTransactionReceipt(expectedTx);
+        var transaction = that.web3.eth.getTransaction(expectedTx);
         if (receipt && transaction.gas == receipt.gasUsed) {
             // wtf?! This is the only way to check for an error??
             callback.onFailure(new Error("Out of gas (or an error was thrown)"), false);

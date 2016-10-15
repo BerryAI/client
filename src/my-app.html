@@ -402,12 +402,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   </template>
 
   <script>
-    var Web3 = require('web3');
-    var web3 = new Web3();
     var BigNumber = require('bignumber.js');
-    web3.setProvider(new web3.providers.HttpProvider('http://localhost:8545'));
     var blockchain = new Web3Connector();
-    var musicoinService = new MusicoinConnector(web3);
+    var musicoinService = new MusicoinConnector(blockchain);
     var pendingPayments = new BigNumber(0);
     var player;
     var pendingPaymentAction;
@@ -429,6 +426,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       ready: function() {
         musicoin = getMusicoin();
+        this.playlist = [];
         this.account = blockchain.getDefaultAccount();
         this.page = 'player-view';
         var that = this;
@@ -444,6 +442,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           if (progress_percent > 70 && that.pendingTransaction) {
             var tmpPending = that.pendingTransaction;
             that.pendingTransaction = null;
+
+            // TODO: The player stutters when this happens.  async doesn't seem to help.
             that.async(tmpPending.commit);
           }
         });
@@ -532,12 +532,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       updateUserBalance: function(self) {
         var weiBalance = blockchain.getUserBalance();
         self.userBalance = this.formatAsMusicoin(weiBalance);
-        self.pendingPayments = web3.fromWei(pendingPayments, 'ether');
+        self.pendingPayments = blockchain.toMusicCoinUnits(pendingPayments);
       },
 
       formatAsMusicoin: function (wei) {
-        var eth = web3.toBigNumber(web3.fromWei(wei, 'ether'));
-        return eth.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        var mc = new BigNumber(blockchain.toMusicCoinUnits(wei));
+        return mc.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
       },
 
       addPendingPayment : function(value) {
@@ -580,7 +580,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       getContractInstance: function(item) {
-        return web3.eth.contract(this.getContractAbiFromCatalog(item.contractId)).at(item.contractId);
+        return blockchain.getContractInstance(item.contractId);
       },
 
       getContractAbiFromCatalog: function (id) {
@@ -634,7 +634,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         var txInfo = this.currentTransactionInfo;
         if (txInfo) {
           musicoinService.addFavorite(txInfo.contractId);
-          var amount = web3.toWei(1, 'ether');
+          var amount = blockchain.toIndivisibleUnits(1);
           this.getPermission("Tip for '" + this.track + "' by " + this.artist, amount, true, function(){
             musicoin.addPendingPayment(amount);
             musicoin.payForTip(txInfo.ppp, amount, musicoin.password, musicoin.createPaymentListener(amount));
