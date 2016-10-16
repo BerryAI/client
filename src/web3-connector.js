@@ -31,21 +31,39 @@ Web3Connector.prototype.getCoinsPerPlay = function(contractId) {
 };
 
 Web3Connector.prototype.ppp = function(pppRequest, pwd, callback) {
-    var result = this.web3.personal.unlockAccount(this.selectedAccount, pwd, 10);
-    var that = this;
+    this.unlockAccount(pwd)
+        .then(function() {
+            this._pppNoAuth(pppRequest, callback);
+        }.bind(this))
+        .catch(function(err) { callback.onFailure(err, true)});
+};
+
+Web3Connector.prototype._pppNoAuth = function(pppRequest, callback) {
     var contract = this.getContractInstance(pppRequest.to);
-    if (result) {
-        contract.play({from: this.selectedAccount, value: pppRequest.amount, gas: 940000}, function (err, expectedTx) {
-            if (err) {
-                callback.onFailure(err);
-                return;
-            }
-            that.waitForTransaction(expectedTx, callback);
-        });
+    var params = {from: this.selectedAccount, value: pppRequest.amount, gas: 940000};
+    contract.play(params, function (err, tx) {
+        this._handleTransactionResult(err, tx, callback)}.bind(this));
+};
+
+Web3Connector.prototype._handleTransactionResult = function(err, expectedTx, callback) {
+    if (err) {
+        callback.onFailure(err);
+        return;
     }
-    else {
-        callback.onFailure(new Error("Authentication failed"), true);
-    }
+    this.waitForTransaction(expectedTx, callback)
+};
+
+Web3Connector.prototype.unlockAccount = function(pwd) {
+    console.log("Unlocking account...");
+    return new Promise(function(resolve, reject) {
+        var result = this.web3.personal.unlockAccount(this.selectedAccount, pwd, 10);
+        if (result) {
+            resolve(result);
+        }
+        else {
+            reject(new Error("Unlocking account failed"));
+        }
+    }.bind(this));
 };
 
 Web3Connector.prototype.release = function(releaseRequest) {
@@ -53,21 +71,14 @@ Web3Connector.prototype.release = function(releaseRequest) {
 };
 
 Web3Connector.prototype.tip = function(tipRequest, pwd, callback) {
-    var result = this.web3.personal.unlockAccount(this.selectedAccount, pwd, 10);
-    var that = this;
-    if (result) {
-        callback.onStatusChange("Account unlocked, sending transaction...");
-        this.web3.eth.sendTransaction({from: this.selectedAccount, value: tipRequest.amount, to: tipRequest.to}, function (err, expectedTx) {
-            if (err) {
-                callback.onFailure(err, false);
-                return;
-            }
-            that.waitForTransaction(expectedTx, callback);
-        });
-    }
-    else {
-        callback.onFailure(new Error("Invalid account number or password..."), true);
-    }
+    this.unlockAccount(pwd)
+        .then(function() {
+            var params = {from: this.selectedAccount, value: tipRequest.amount, to: tipRequest.to};
+            this.web3.eth.sendTransaction(params, function (err, tx) {
+                this._handleTransactionResult(err, tx, callback);
+            }.bind(this));
+        }.bind(this))
+        .catch(function(err) { callback.onFailure(err, true)});
 };
 
 Web3Connector.prototype.getContractInstance = function(contractId) {

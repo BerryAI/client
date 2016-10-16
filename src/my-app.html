@@ -439,7 +439,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.$.player.addEventListener('timeupdate', function() {
           var progress_percent = player.currentTime / player.duration * 100;
           that.$.progress.value = progress_percent;
-          if (progress_percent > 70 && that.pendingTransaction) {
+          if (progress_percent > musicoinService.getPlaybackPaymentPercentage() && that.pendingTransaction) {
             var tmpPending = that.pendingTransaction;
             that.pendingTransaction = null;
 
@@ -455,14 +455,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.$.player.addEventListener('abort', updatePlayState);
 
         setupDebugLogging();
-        this.categories = musicoinService.getCategories();
+        musicoinService.getCategories(function(_categories) {
+          this.categories = _categories;
+        }.bind(this));
 
-        // TODO: Get rid of this stupid code.
         window.setTimeout(function() {
-          // This sucks.  wtf?!  I can't get the page to select on the left nav.  I hate routes.
-          that.$.pages.selected = 'player-view';
-          that.set('route.path', '/player-view/new');
-        }, 1000);
+          this.$.pages.selected = 'player-view';
+          this.set('route.path', '/player-view/' + this.categories[0].id);
+        }.bind(this), 1000);
       },
 
       checkForEnter: function (e) {
@@ -723,11 +723,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       _subrouteChanged: function(subroute) {
         if (subroute.prefix == "/player-view") {
-          var pageName = subroute.path.substring(1); // "/page-name" -> "page-name"
-          musicoinService.loadContractsFromURL(pageName, function (groups) {
-            musicoin.$.browse.setDataModel(groups);
-          })
+          this.updateGridView();
         }
+      },
+
+      updateGridView: function() {
+        console.log("updateGridView: " + this.subroute.path);
+        var pageName = this.subroute.path.substring(1); // "/page-name" -> "page-name"
+        musicoinService.loadContractsFromURL(pageName, '', function (groups) {
+          musicoin.$.browse.setDataModel(groups);
+        })
       },
 
       _pageChanged: function(page) {
