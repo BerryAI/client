@@ -1,0 +1,228 @@
+:host {
+    display: block;
+    margin: 0px;
+    color: #aaa;
+}
+
+.header {
+    color: #aaa;
+    font-weight: lighter;
+    display: flex;
+    align-items: center;
+    font-size: 2em;
+}
+
+.back-button {
+    padding: 0px;
+}
+
+h3 {
+    font-weight: lighter;
+    margin-bottom: 0px;
+}
+
+paper-input {
+    --paper-input-container-color: #aaa;
+    --paper-input-container-focus-color: #aaa;
+    --paper-input-container-invalid-color: #aaa;
+    --paper-input-container-input-color: #aaa;
+}
+
+paper-dropdown-menu {
+    --paper-dropdown-menu-container-color: #aaa;
+    --paper-dropdown-menu-container-focus-color: #aaa;
+    --paper-dropdown-menu-container-invalid-color: #aaa;
+    --paper-dropdown-menu-container-input-color: #aaa;
+    --paper-input-container-color: #aaa;
+    --paper-input-container-focus-color: #aaa;
+    --paper-input-container-invalid-color: #aaa;
+    --paper-input-container-input-color: #aaa;
+}
+
+.license-detail {
+    display: table-cell;
+    text-align: center;
+}
+
+.cell-header {
+    display: table-cell;
+    text-align: center;
+}
+
+.header-row {
+    display: table-row;
+    border: 5px solid transparent;
+    margin: 2px;
+    align-items: center;
+    min-width: 100px;
+    background-color: transparent;
+}
+
+.license-view-button {
+    cursor: pointer;
+}
+
+.license-tag {
+    display: table-row;
+    background-color: #3e4e3e;
+    border: 5px solid transparent;
+    margin: 2px;
+    align-items: center;
+    min-width: 100px;
+}
+
+.license-tag > div {
+    line-height: 1;
+    margin: 2px;
+}
+
+[hidden] {
+    display: none;
+}
+
+.license-name {
+    font-weight: lighter;
+    min-width: 100px;
+    margin-right: 10px;
+    border: none;
+    width: 100px;
+    color: #a1a1a1;
+    padding: 2px;
+    font-size: 1em;
+}
+
+.licenseInput {
+    display: inline-block;
+    margin-left: 10px;
+    width: 400px;
+}
+
+paper-input {
+    display: inline-block;
+}
+
+.license-area {
+    display: table;
+    -webkit-border-vertical-spacing: 2px;
+    width: 100%;
+}
+
+[hidden] {
+    display: none;
+}
+
+.license-area[hidden] {
+    display: none;
+}
+
+.work-image {
+    height: 200px;
+    width: 100%;
+    left: 0px;
+    right: 0px;
+    background-color: #333;
+
+}
+
+.numeric {
+    text-align: right;
+}
+
+.top-section {
+    display: flex;
+    flex-direction: row;
+}
+
+.price-area {
+    font-size: 1.5em;
+    text-align: center;
+    background-color: #3e3e3e;
+    border: 20px solid #3e3e3e;
+    border-top-width: 5px;
+    position: absolute;
+    border-radius: 10px;
+    top: 10px;
+    right: 50px;
+    font-weight: lighter;
+}
+
+#price {
+    font-size: 2em;
+    width: 100px;
+    background-color: transparent;
+    border: 0;
+    color: whitesmoke;
+}
+
+.coin {
+    font-size: 2em;
+}
+
+.price-line {
+    display: flex;
+}
+
+.main-section {
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+.license-address {
+    color: #7e7e7e;
+    font-size: small;
+}
+
+.audio-input-section {
+    background-color: #3e3e3e;
+    flex-grow: 0.8;
+    font-weight: lighter;
+    cursor: pointer;
+    display: flex;
+    margin-right: 10px;
+    position: relative;
+}
+
+.audio-input-section[hidden] {
+    cursor: default;
+}
+
+.music-icon {
+    width: 64px;
+    background-color: #3e4e3e;
+    height: 64px;
+}
+
+.music-file-text {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5em;
+    margin-right: 10px;
+    margin-left: 10px;
+}
+
+.music-file-size {
+    position: absolute;
+    bottom: 0px;
+    right: 5px;
+    color: #7e7e7e;
+    font-size: small;
+}
+
+.img-selection-text {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5em;
+    margin-right: 10px;
+    margin-left: 10px;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    cursor: pointer;
+}
+
+.image-area {
+    position: relative;
+}

@@ -8,19 +8,19 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 -->
 
-<link rel="import" href="../bower_components/polymer/polymer.html">
-<link rel="import" href="shared-styles.html">
-<link rel="import" href="../bower_components/paper-button/paper-button.html">
-<link rel="import" href="../bower_components/paper-input/paper-input.html">
-<link rel="import" href="../bower_components/paper-audio-player/paper-audio-player.html">
-<link rel="import" href="../bower_components/paper-card/paper-card.html">
-<link rel="import" href="../bower_components/paper-material/paper-material.html">
-<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
-<link rel="import" href="../bower_components/iron-icons/av-icons.html">
-<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
-<link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
-<link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
-<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../shared-styles.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/paper-audio-player/paper-audio-player.html">
+<link rel="import" href="../../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../bower_components/paper-material/paper-material.html">
+<link rel="import" href="../../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../../bower_components/iron-icons/av-icons.html">
+<link rel="import" href="../../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../../../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../../../bower_components/paper-item/paper-item.html">
 
 <dom-module id="my-contract-editor-view">
     <template>
@@ -31,14 +31,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               color: #aaa;
             }
 
+            .back-button {
+              padding: 0px;
+            }
+
             .header {
               color: #aaa;
               font-weight: lighter;
               display: flex;
-              justify-content: space-between;
               align-items: center;
               font-size: 2em;
-              margin-left: 20px;
             }
 
             h3 {
@@ -228,10 +230,23 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             font-size: small;
           }
 
+          .button-area {
+            display: flex;
+            justify-content: flex-end;
+          }
+
+          .button-area > paper-button {
+            font-weight: lighter;
+            text-transform: none;
+          }
+
         </style>
 
         <div>
-          <div class="header" on-tap="printData">{{workName}}</div>
+          <div class="header" on-tap="printData">
+            <paper-icon-button icon="icons:arrow-back" class="back-button" on-tap="handleBackClick"></paper-icon-button>
+            {{workName}}
+          </div>
           <div>
             <iron-image class="work-image" src="{{workImage}}" sizing="cover"></iron-image>
             <paper-material class="price-area">
@@ -244,13 +259,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
           <div class="main-section">
             <div class="top-section">
-              <paper-material class="audio-input-section" onclick="if(contractEditor.editable)contractEditor.$.audioFile.click()">
+              <paper-material id="fileSelector" class="audio-input-section">
                 <iron-icon class="music-icon" icon="av:queue-music"></iron-icon>
                 <div class="music-file-text">[[selectedAudioText]]</div>
                 <div class="music-file-size">[[selectedAudioSize]]</div>
               </paper-material>
-              <input hidden id="audioFile" type="file" value="{{selectedAudio}}" onchange="updateSelectedFile()">
-              <paper-dropdown-menu disabled="[[!editable]]" label="Contract type">
+              <input hidden id="audioFile" type="file" value="{{selectedAudio}}">
+              <paper-dropdown-menu disabled="[[!editable]]" label="License type">
                 <paper-listbox selected="{{contractTypeIdx}}" class="dropdown-content">
                   <paper-item>PPP</paper-item>
                 </paper-listbox>
@@ -297,17 +312,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             </div>
           </div>
         </div>
+        <div class="button-area">
+          <paper-button on-tap="cancel">Cancel</paper-button>
+          <paper-button on-tap="handleReleaseClicked">Release</paper-button>
+        </div>
     </template>
 
     <script>
       const path = require('path');
       var fs = require("fs");
-      var contractEditor;
       var addressToNameMapping = {};
       Polymer({
         is: 'my-contract-editor-view',
         ready: function () {
-          contractEditor = this;
           this.editable = true;
           this.workName = "Some track name";
           this.workImage = "../images/tree.jpg"
@@ -315,21 +332,48 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           this.royalties = [];
           this.coinsPerPlay = 1;
           this.contractTypeIdx = 0;
+
           this.selectedAudioText = 'Click to select a file';
           this.selectedAudioSize = '';
+          this.$.audioFile.onchange = function() {
+            this._updateSelectedFile();
+          }.bind(this);
+
+          this.$.fileSelector.onclick = function() {
+            if (this.editable) {
+              this.$.audioFile.click();
+            }
+          }.bind(this);
+        },
+
+        handleBackClick: function() {
+          this.fire('back-clicked');
+        },
+
+        handleReleaseClicked: function() {
+          this.fire('release', this.getDataModel());
+        },
+
+        setDataModel: function(newModel) {
+          var work = newModel.work;
+          var license = newModel.license;
+          this.workName = work.track;
+          this.workImage = work.img;
+          this.editable = newModel.editable;
+          console.log(newModel);
         },
 
         printData: function() {
-          console.log(JSON.stringify(this.getDataObject()));
+          console.log(JSON.stringify(this.getDataModel()));
         },
 
-        getDataObject: function() {
+        getDataModel: function() {
           return {
-            contributors: contractEditor.contributors,
-            royalties: contractEditor.royalties,
-            coinsPerPlay: contractEditor.coinsPerPlay,
-            contractType: contractEditor.contractTypeIdx,
-            selectedAudio: contractEditor.selectAudio
+            contributors: this.contributors,
+            royalties: this.royalties,
+            coinsPerPlay: this.coinsPerPlay,
+            contractType: this.contractTypeIdx,
+            selectedAudio: this.selectAudio
           }
         },
 
@@ -443,11 +487,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         _updateSelectedFile: function() {
           if (!this.editable) return;
-          var filePath = contractEditor.$.audioFile.value;
+          var filePath = this.$.audioFile.value;
           if (filePath) {
             this.set('selectedAudio', filePath);
-
-
             var stats = fs.statSync(filePath);
             var fileSizeInBytes = stats["size"];
             var fileSizeInMegabytes = fileSizeInBytes / 1000000.0
@@ -456,9 +498,5 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           }
         }
       });
-
-    function updateSelectedFile() {
-      contractEditor._updateSelectedFile();
-    }
     </script>
 </dom-module>

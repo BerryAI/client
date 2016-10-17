@@ -23,6 +23,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/paper-progress/paper-progress.html">
 <link rel="import" href="../bower_components/iron-icons/av-icons.html">
 <link rel="import" href="../bower_components/iron-icons/social-icons.html">
+<link rel="import" href="my-works-view/my-works-view.html">
 <script src="web3-connector.js"></script>
 <script src="musicoin-connector.js"></script>
 
@@ -336,7 +337,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
           <h3>Musician</h3>
           <a name="works-view" href="/works-view">My Works</a>
-          <a name="contract-editor-view" href="/contract-editor-view">Editor</a>
 
           <h3>Developer</h3>
           <a name="parity-view" href="/parity-view">Utilities</a>
@@ -378,10 +378,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             attr-for-selected="name"
             fallback-selection="view404"
             role="main">
-          <my-player-view id="browse" name="player-view"></my-player-view>
-          <my-works-view name="works-view"></my-works-view>
+          <my-player-view id="browse" show-group-play-icon name="player-view"></my-player-view>
+          <my-works-view id="works" name="works-view"></my-works-view>
           <my-parity-view name="parity-view"></my-parity-view>
-          <my-contract-editor-view name="contract-editor-view"></my-contract-editor-view>
           <my-view404 name="view404"></my-view404>
         </iron-pages>
       </app-header-layout>
@@ -458,6 +457,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         musicoinService.getCategories(function(_categories) {
           this.categories = _categories;
         }.bind(this));
+
+        musicoin.$.browse.addEventListener('selected', function(e) {
+          musicoin.playAll(e.detail);
+        });
 
         window.setTimeout(function() {
           this.$.pages.selected = 'player-view';
@@ -550,7 +553,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       playAll: function(items) {
-        this.playlist = (this.playlist || []).concat(items);
+        this.playlist = items;
         this.playNext();
       },
 
@@ -725,6 +728,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         if (subroute.prefix == "/player-view") {
           this.updateGridView();
         }
+        if (subroute.prefix == "/works-view") {
+          this.updateMyWorksView();
+        }
+      },
+
+      updateMyWorksView: function() {
+        console.log("updateMyWorksView: " + this.subroute.path);
+        var pageName = this.subroute.path.substring(1); // "/page-name" -> "page-name"
+        musicoinService.loadMyWorks(function (works) {
+          musicoin.$.works.setDataModel([{name: "My Works", contracts:works}]);
+        })
       },
 
       updateGridView: function() {
@@ -738,8 +752,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       _pageChanged: function(page) {
         console.log("pageChanged: " + page);
         // Load page import on demand. Show 404 page if fails
-        var resolvedPageUrl = this.resolveUrl('my-' + page + '.html');
-        this.importHref(resolvedPageUrl, null, this._showPage404, true);
+        if (page == "works-view") {
+          var resolvedPageUrl = this.resolveUrl('my-' + page + '/' + 'my-' + page + '.html');
+          this.importHref(resolvedPageUrl, null, this._showPage404, true);
+        }
+        else {
+          var resolvedPageUrl = this.resolveUrl('my-' + page + '.html');
+          this.importHref(resolvedPageUrl, null, this._showPage404, true);
+        }
       },
 
       _showPage404: function() {

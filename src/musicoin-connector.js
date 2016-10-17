@@ -5,9 +5,30 @@ function MusicoinConnector(blockchain) {
     this.musicoinCatalogURL = "http://dev.catalog.musicoin.org/api/license/search";
     this.musicoinListURL = "http://catalog.musicoin.org/api/pages/list";
     this.musicoinContentURL = "http://catalog.musicoin.org/api/page/content";
+    this.musicoinMyWorksURL = "http://dev.catalog.musicoin.org/api/myworks";
     this.favoritesFile = 'favorites.json';
     this.playbackPaymentPercentage = 70;
 }
+
+MusicoinConnector.prototype.loadMyWorks = function(callback) {
+    var propertiesObject = { address:blockchain.getSelectedAccount()};
+    request({
+        url: this.musicoinMyWorksURL,
+        qs: propertiesObject,
+        json: true
+    }, function (error, response, body) {
+        if (!error && response.statusCode === 200 && body && body.success) {
+            var output = [];
+            body.result.forEach(function(next) {
+                output.push(this.createContractItemFromAddress(next.contract_id));
+            }.bind(this));
+            callback(output);
+        }
+        else {
+            console.log(error);
+        }
+    }.bind(this));
+};
 
 MusicoinConnector.prototype.loadContractsFromURL = function(page, keywords, callback) {
     if (page == "favorites") {

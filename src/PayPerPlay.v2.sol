@@ -6,7 +6,7 @@ contract MusicoinLogger {
     event metadataUpdateEvent(address sender, string oldResource, string newResource);
 
     modifier noCoins {
-        //if (msg.value > 0) throw;
+        if (msg.value > 0) throw;
         _
     }
 
