@@ -79,11 +79,10 @@ MusicoinConnector.prototype.convertCategoryFormat = function (serverFormat) {
 
 MusicoinConnector.prototype.addFavorite = function (contractId) {
   fs.readFile(this.favoritesFile, 'utf8', function (err, data) {
-    if (err) throw err;
-    var contractIds = JSON.parse(data);
+    var contractIds = err ? [] : JSON.parse(data);
     if (!contractIds.includes(contractId)) {
       contractIds.push(contractId);
-      fs.writeFile(fileName, JSON.stringify(contractIds), function (err) {
+      fs.writeFile(this.favoritesFile, JSON.stringify(contractIds), function (err) {
         if (err)
           console.log(err);
         else
