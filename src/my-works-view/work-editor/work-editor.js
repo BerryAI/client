@@ -24,7 +24,10 @@ Polymer({
       if (!this.editable) return;
       var filePath = this.$.imageFile.value;
       if (filePath) {
-        this.set('work.img', filePath.split("\\").join("/"));
+        var corrected = "file:///" + filePath.split("\\").join("/");
+        console.log("img path: " + filePath);
+        console.log("img src: " + corrected);
+        this.set('work.img', corrected);
       }
     }.bind(this);
   },
