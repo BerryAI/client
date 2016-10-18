@@ -4,9 +4,6 @@ Polymer({
     work: {
       type: Object,
     },
-    licenses: {
-      type: Array,
-    },
     editable: {
       type: Boolean,
       value: false,
@@ -16,12 +13,25 @@ Polymer({
   ready: function () {
     this.editable = true;
     this.licenses = [];
+    this.metadata = [];
+    this.$.fileSelector.onclick = function() {
+      if (this.editable) {
+        this.$.imageFile.click();
+      }
+    }.bind(this);
+
+    this.$.imageFile.onchange = function() {
+      if (!this.editable) return;
+      var filePath = this.$.imageFile.value;
+      if (filePath) {
+        this.set('work.img', filePath.split("\\").join("/"));
+      }
+    }.bind(this);
   },
 
   setDataModel: function (newModel) {
     this.work = newModel.work;
     this.editable = newModel.editable;
-    this.licenses = newModel.licenses || [];
   },
 
   printData: function () {
@@ -29,10 +39,11 @@ Polymer({
   },
 
   getDataObject: function () {
-    return {
-      licenses: this.licenses,
-      workType: this.workTypeIdx
-    }
+    return this.work;
+  },
+
+  releaseWork: function() {
+    this.fire('release-work', this.getDataObject());
   },
 
   handleBackClick: function () {
@@ -40,15 +51,23 @@ Polymer({
   },
 
   handleAddLicense: function (input) {
-    this.fire('add-license');
+    this.push('work.licenses', this.createNewLicense());
   },
 
-  viewLicense: function (e) {
-    this.fire('selected', e.model.license)
+  releaseLicense: function(e) {
+    alert("Releasing license from custom event: " + JSON.stringify(e.detail));
   },
 
-  removelicense: function (e) {
-    if (!this.editable) return;
-    this.splice('licenses', e.model.index, 1);
+  createNewLicense: function() {
+    return {
+      type: 0,
+      typeName: "PPP",
+      price: 1,
+      address: "",
+      editable: true,
+      contributors: [],
+      royalties: [],
+      metadata: []
+    }
   }
 });

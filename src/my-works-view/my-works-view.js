@@ -13,15 +13,12 @@ Polymer({
             this.showView(this.$.worksView);
         }.bind(this));
 
-        this.$.workEditor.addEventListener('add-license', function(){
-            this.addNewLicense();
+        this.$.workEditor.addEventListener('release-work', function(e){
+            this.releaseWork(e.detail);
         }.bind(this));
 
-        this.$.licenseEditor.addEventListener('back-clicked', function(e) {
-            this.showView(this.$.workEditor);
-        }.bind(this));
-
-        this.$.licenseEditor.addEventListener('release', function(e) {
+        // this event bubbles up from all child license editors.
+        this.$.workEditor.addEventListener('release-license', function(e){
             this.releaseLicense(e.detail);
         }.bind(this));
     },
@@ -35,6 +32,7 @@ Polymer({
         this.$.workEditor.setDataModel({
             work: this.selectedWork,
             editable: false,
+            metadata: [{key: "test", value:"Value"}],
             licenses: [] // TODO: we need to load licenses associated with this work
         });
         this.showView(this.$.workEditor);
@@ -49,37 +47,23 @@ Polymer({
         return {
             work: {
                 track: "New Work",
-                img: ""
+                img: "",
+                metadata: [],
+                licenses: []
             },
-            editable: true,
-            licenses: []
+            editable: true
         }
     },
 
-    addNewLicense: function() {
-        this.$.licenseEditor.setDataModel({
-            work: this.selectedWork,
-            license: {},
-            editable: true
-        });
-        this.showView(this.$.licenseEditor);
-    },
-
-    showLicenseDetail: function(license) {
-        this.$.licenseEditor.setDataModel({
-            work: this.selectedWork,
-            license: license,
-            editable: false
-        });
-        this.showView(this.$.licenseEditor);
-    },
-
     releaseLicense: function(license) {
-        alert("Releasing: " + JSON.stringify(license));
+        alert("Releasing License: " + JSON.stringify(license));
+    },
+
+    releaseWork: function(work) {
+        alert("Releasing Work: " + JSON.stringify(work));
     },
 
     showView: function(element) {
-        this.$.licenseEditor.style.display = 'none';
         this.$.worksView.style.display = 'none';
         this.$.workEditor.style.display = 'none';
         element.style.display = 'block';

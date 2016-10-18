@@ -1,0 +1,92 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../shared-styles.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/paper-audio-player/paper-audio-player.html">
+<link rel="import" href="../../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../bower_components/paper-material/paper-material.html">
+<link rel="import" href="../../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../../bower_components/iron-icons/av-icons.html">
+<link rel="import" href="../../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../../../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../../../bower_components/paper-item/paper-item.html">
+
+<dom-module id="license-editor">
+  <link rel="import" type="css" href="license-editor.css">
+  <template>
+    <paper-material class="license-item">
+      <paper-material elevation="2" class="license-item-header" on-tap="toggleLicenseBody">
+        <div>&#x266E;{{license.price}} [[license.typeName]]</div>
+        <div>[[_computeLicenseText(license.address)]]</div>
+        <paper-icon-button mini icon="cloud-upload" hidden$=[[!license.editable]] on-tap="releaseLicense"></paper-icon-button>
+        <paper-icon-button mini icon="done" hidden$=[[license.editable]]></paper-icon-button>
+      </paper-material>
+      <div class="license-item-body" hidden$="[[!expanded]]">
+        <div class="license-item-body-header">
+          <paper-material id="fileSelector" class="audio-input-section normal-margin" hidden$=[[!license.editable]]>
+            <iron-icon class="music-icon" icon="av:queue-music"></iron-icon>
+            <div class="music-file-text">[[selectedAudioText]]</div>
+            <div class="music-file-size">[[selectedAudioSize]]</div>
+          </paper-material>
+          <input hidden id="audioFile" type="file" value="{{selectedAudio}}">
+          <div class="license-item-body-price normal-margin">&#x266E;<input class="price" min=0 type=number disabled="[[!license.editable]]" value="{{license.price::input}}"></div>
+          <paper-dropdown-menu class="normal-margin" disabled="[[!license.editable]]" label="License type">
+            <paper-listbox selected="{{license.type}}" class="dropdown-content">
+              <paper-item>PPP</paper-item>
+            </paper-listbox>
+          </paper-dropdown-menu>
+        </div>
+
+        <div>
+          Royalties
+          <paper-input hidden$={{!license.editable}} class="contributor-input" on-keydown="addRoyaltyOnEnter" label="add royalty"></paper-input>
+        </div>
+        <template is="dom-repeat" items="{{license.royalties}}" as="royalty">
+          <div>
+            <paper-material class="royalty-tag contributor-tag">
+              <input class="contributor-name" disabled="[[!license.editable]]" on-keyup="updateUserMapping" value="{{royalty.name::input}}">
+              <div>&#x266E;</div>
+              <input class="shares" min=0 type=number disabled="[[!license.editable]]" value="{{royalty.amount::input}}">
+              <div class="contributor-address">{{royalty.address}}</div>
+              <paper-icon-button hidden$=[[!license.editable]] class="deleteButton" icon="remove" on-tap="removeRoyalty"></paper-icon-button>
+            </paper-material>
+          </div>
+        </template>
+        <BR>
+
+        <div>
+          Contributors (sharing &#x266E;{{_computeRemainingPrice(license.price, license.royalties.*)}})
+          <paper-input hidden$={{!license.editable}} class="contributor-input" on-keydown="addContributorOnEnter" label="add contributor"></paper-input>
+        </div>
+        <template is="dom-repeat" items="{{license.contributors}}" as="contributor">
+          <div>
+            <paper-material class="contributor-tag">
+              <input class="contributor-name" disabled="[[!license.editable]]" on-keyup="updateUserMapping" value="{{contributor.name::input}}">
+              <input class="shares" min=0 type=number disabled="[[!license.editable]]" value="{{contributor.shares::input}}">
+              <div>shares</div>
+              <div class="contributor-address">{{contributor.address}}</div>
+              <paper-icon-button hidden$=[[!license.editable]] class="deleteButton" icon="remove" on-tap="removeContributor"></paper-icon-button>
+            </paper-material>
+          </div>
+        </template>
+
+        <BR>
+        <metadata-editor id="metadataEditor" label="License Specific Metadata" metadata="[[license.metadata]]" editable="[[license.editable]]"></metadata-editor>
+      </div>
+
+    </paper-material>
+  </template>
+
+  <script src="license-editor.js"></script>
+</dom-module>

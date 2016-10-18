@@ -31,8 +31,8 @@
 
 #addNewWorkButton {
     position: absolute;
-    bottom: 1em;
-    right: 1em;
+    top: 1em;
+    right: 2em;
     z-index: 3;
     background-color: #2176bd;
 }

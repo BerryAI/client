@@ -8,20 +8,22 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 -->
 
-<link rel="import" href="../../bower_components/polymer/polymer.html">
-<link rel="import" href="../shared-styles.html">
-<link rel="import" href="../../bower_components/paper-button/paper-button.html">
-<link rel="import" href="../../bower_components/paper-input/paper-input.html">
-<link rel="import" href="../../bower_components/paper-audio-player/paper-audio-player.html">
-<link rel="import" href="../../bower_components/paper-card/paper-card.html">
-<link rel="import" href="../../bower_components/paper-material/paper-material.html">
-<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
-<link rel="import" href="../../bower_components/iron-icons/av-icons.html">
-<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
-<link rel="import" href="../../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
-<link rel="import" href="../../bower_components/paper-listbox/paper-listbox.html">
-<link rel="import" href="../../bower_components/paper-item/paper-item.html">
-<link rel="import" href="../../bower_components/paper-styles/shadow.html">
+<link rel="import" href="../../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../shared-styles.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/paper-audio-player/paper-audio-player.html">
+<link rel="import" href="../../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../bower_components/paper-material/paper-material.html">
+<link rel="import" href="../../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../../bower_components/iron-icons/av-icons.html">
+<link rel="import" href="../../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../../../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../../bower_components/paper-styles/shadow.html">
+<link rel="import" href="../license-editor/license-editor.html">
+<link rel="import" href="../metadata-editor/metadata-editor.html">
 
 <dom-module id="work-editor">
   <link rel="import" type="css" href="work-editor.css">
@@ -31,45 +33,42 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <paper-icon-button icon="icons:arrow-back" class="back-button" on-tap="handleBackClick"></paper-icon-button>
         {{work.track}}
       </div>
-      <div class="image-area">
-        <iron-image class="work-image" src="{{work.img}}" sizing="cover"></iron-image>
-        <div class="img-selection-text">
-          Click to select an image
+      <div class="top-area">
+        <div class="image-area">
+          <iron-image id="fileSelector" class="work-image" src="{{work.img}}" sizing="cover"></iron-image>
+          <div class="work-image-bg">Click to select an image</div>
+          <input hidden id="imageFile" type="file">
         </div>
-      </div>
-
-      <div class="main-section">
-        <div class="top-section">
+        <div class="metadata-area">
+          <paper-input label="Title" readonly="[[!editable]]" value="{{work.track}}"></paper-input>
+          <paper-input label="Artist" readonly="[[!editable]]" value="{{work.artist}}"></paper-input>
           <paper-dropdown-menu disabled="[[!editable]]" label="Work type">
             <paper-listbox selected="{{work.type}}" class="dropdown-content">
+              <paper-item>Score</paper-item>
+              <paper-item>Lyrics</paper-item>
               <paper-item>Recording</paper-item>
             </paper-listbox>
           </paper-dropdown-menu>
         </div>
+      </div>
 
-        <div class="license-area" hidden$="[[editable]]">
+      <div class="main-section">
+        <metadata-editor id="metadataEditor" label="Additional Metadata" metadata="[[work.metadata]]" editable="[[editable]]"></metadata-editor>
+        <div class="license-area" xhidden$="[[editable]]">
           <h3>
             Licenses
+            <paper-icon-button icon="add" on-tap="handleAddLicense"></paper-icon-button>
           </h3>
-          <div class="header-row">
-            <div class="cell-header" disabled="[[!editable]]">Name</div>
-            <div class="cell-header">Price</div>
-            <div class="cell-header">Address</div>
-            <div class="cell-header">Contributors</div>
-            <div class="cell-header">Royalties</div>
-            <div class="cell-header"></div>
-          </div>
-          <template is="dom-repeat" items="{{licenses}}" as="license">
-            <paper-material class="license-tag">
-              <div class="license-detail" disabled="[[!editable]]">{{license.name::input}}</div>
-              <div class="license-detail">{{license.price}}</div>
-              <div class="license-detail">{{license.address}}</div>
-              <div class="license-detail">{{license.contributors.length}}</div>
-              <div class="license-detail">{{license.royalties.length}}</div>
-              <div class="license-view-button" on-tap="viewLicense">View</div>
-            </paper-material>
+          <template is="dom-repeat" items="{{work.licenses}}" as="license">
+            <license-editor license="{{license}}" work="{{work}}"></license-editor>
           </template>
-          <paper-button on-tap="handleAddLicense">Add</paper-button>
+        </div>
+
+        <div style="height:50px; position: relative">
+          <paper-button hidden$="[[!editable]]" class="release-button" raised on-tap="releaseWork">
+            <iron-icon icon="cloud-upload"></iron-icon>
+            Release
+          </paper-button>
         </div>
       </div>
     </div>

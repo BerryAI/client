@@ -1,0 +1,36 @@
+Polymer({
+  is: 'metadata-editor',
+  properties: {
+    metadata: {
+      type: Object,
+      reflectToAttribute: true
+    },
+    editable: {
+      type: Boolean,
+      value: false,
+      reflectToAttribute: true
+    }
+  },
+  ready: function () {
+    console.log("Metadata editable: " + this.editable);
+  },
+
+  addMetadataRow: function() {
+    this.push('metadata', {key: '', value: ''});
+  },
+
+  addMetadata: function(_key, _value) {
+    this.push('metadata', {key: _key, value: _value});
+  },
+
+  addMetadataIfLast: function(e) {
+    if (e.model.index == this.metadata.length - 1 && (e.model.keyValue.key || e.model.keyValue.value)) {
+      this.addMetadataRow();
+    }
+  },
+
+  removeExtendedMetadataRow: function(e) {
+    this.splice('metadata', e.model.index, 1);
+    this.notifyPath('metadata');
+  }
+});

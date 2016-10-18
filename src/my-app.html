@@ -736,8 +736,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       updateMyWorksView: function() {
         console.log("updateMyWorksView: " + this.subroute.path);
         var pageName = this.subroute.path.substring(1); // "/page-name" -> "page-name"
-        musicoinService.loadMyWorks(function (works) {
-          musicoin.$.works.setDataModel([{name: "My Works", contracts:works}]);
+        musicoinService.loadMyWorks(function (listed, unlisted) {
+          musicoin.$.works.setDataModel([
+                  {name: "Listed", contracts:listed},
+                  {name: "Unlisted", contracts:unlisted}]);
         })
       },
 
