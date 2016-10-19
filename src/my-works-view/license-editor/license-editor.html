@@ -34,11 +34,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </paper-material>
       <div class="license-item-body" hidden$="[[!expanded]]">
         <div class="license-item-body-header">
-          <paper-material id="fileSelector" class="audio-input-section normal-margin" hidden$=[[!license.editable]]>
+          <div id="fileSelector" class="audio-input-section normal-margin" hidden$=[[!license.editable]]>
             <iron-icon class="music-icon" icon="av:queue-music"></iron-icon>
             <div class="music-file-text">[[selectedAudioText]]</div>
             <div class="music-file-size">[[selectedAudioSize]]</div>
-          </paper-material>
+          </div>
           <input hidden id="audioFile" type="file" value="{{selectedAudio}}">
           <div class="license-item-body-price normal-margin">&#x266E;<input class="price" min=0 type=number disabled="[[!license.editable]]" value="{{license.coinsPerPlay::input}}"></div>
           <paper-dropdown-menu class="normal-margin" disabled="[[!license.editable]]" label="License type">
@@ -48,41 +48,47 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           </paper-dropdown-menu>
         </div>
 
-        <div>
-          Royalties
-          <paper-input hidden$={{!license.editable}} class="contributor-input" on-keydown="addRoyaltyOnEnter" label="add royalty address"></paper-input>
-        </div>
-        <template is="dom-repeat" items="{{license.royalties}}" as="royalty">
-          <div>
-            <paper-material class="royalty-tag contributor-tag">
-              <input class="contributor-name" disabled="[[!license.editable]]" on-keyup="updateUserMapping" value="{{royalty.name::input}}">
-              <div>&#x266E;</div>
-              <input class="shares" min=0 type=number disabled="[[!license.editable]]" value="{{royalty.amount::input}}">
-              <div class="contributor-address">{{royalty.address}}</div>
-              <paper-icon-button hidden$=[[!license.editable]] class="deleteButton" icon="remove" on-tap="removeRoyalty"></paper-icon-button>
-            </paper-material>
+        <paper-material class="form-section" elevation="0">
+          <div class="royalty-area-header">
+            <div class="royalty-header">Royalties</div>
+            <div>
+              <paper-button on-tap="addNewRoyalty" raised elevation="1">Add fixed payment</paper-button>
+              <paper-button on-tap="addNewContributor" raised elevation="1">Add shares</paper-button>
+            </div>
+            <!--<paper-input hidden$={{!license.editable}} class="contributor-input" on-keydown="addRoyaltyOnEnter" label="add royalty address"></paper-input>-->
           </div>
-        </template>
-        <BR>
+          <template is="dom-repeat" items="{{license.royalties}}" as="royalty">
+            <div>
+              <paper-material class="royalty-tag contributor-tag">
+                <input placeholder="Name" class="contributor-name" disabled="[[!license.editable]]" on-keyup="updateUserMapping" value="{{royalty.name::input}}">
+                <div class="input-with-units">
+                  <div class="value-units">&#x266E;</div>
+                  <input class="royalty-amount" min=0 type=number value="{{royalty.amount::input}}" disabled="[[!license.editable]]">
+                </div>
+                <input placeholder="enter an address" class="contributor-address" disabled="[[!license.editable]]" value="{{royalty.address::input}}">
+                <paper-icon-button hidden$=[[!license.editable]] class="deleteButton" icon="remove" on-tap="removeRoyalty"></paper-icon-button>
+              </paper-material>
+            </div>
+          </template>
+          <template is="dom-repeat" items="{{license.contributors}}" as="contributor">
+            <div>
+              <paper-material class="contributor-tag">
+                <input placeholder="Name" class="contributor-name" disabled="[[!license.editable]]" on-keyup="updateUserMapping" value="{{contributor.name::input}}">
+                <div class="input-with-units">
+                  <div class="value-units">&#x25D4;</div>
+                  <input class="shares" min=0 type=number disabled="[[!license.editable]]" value="{{contributor.shares::input}}">
+                </div>
+                <input placeholder="enter an address" class="contributor-address" disabled="[[!license.editable]]" value="{{contributor.address::input}}">
+                <paper-icon-button hidden$=[[!license.editable]] class="deleteButton" icon="remove" on-tap="removeContributor"></paper-icon-button>
+              </paper-material>
+            </div>
+          </template>
+          <div hidden$="{{_shouldHideShareholderMessage(license.contributors.*, license.royalties.*)}}">After paying fixed payments, shareholders will share <u>&#x266E;{{_computeRemainingCoinsPerPlay(license.coinsPerPlay, license.royalties.*)}}</u> between them according to their shares entered above</div>
+        </paper-material>
+        <paper-material class="form-section" elevation="0">
+          <metadata-editor id="metadataEditor" label="License Specific Metadata" metadata="[[license.metadata]]" editable="[[license.editable]]"></metadata-editor>
+        </paper-material>
 
-        <div>
-          Contributors (sharing &#x266E;{{_computeRemainingCoinsPerPlay(license.coinsPerPlay, license.royalties.*)}})
-          <paper-input hidden$={{!license.editable}} class="contributor-input" on-keydown="addContributorOnEnter" label="add contributor"></paper-input>
-        </div>
-        <template is="dom-repeat" items="{{license.contributors}}" as="contributor">
-          <div>
-            <paper-material class="contributor-tag">
-              <input class="contributor-name" disabled="[[!license.editable]]" on-keyup="updateUserMapping" value="{{contributor.name::input}}">
-              <input class="shares" min=0 type=number disabled="[[!license.editable]]" value="{{contributor.shares::input}}">
-              <div>shares</div>
-              <div class="contributor-address">{{contributor.address}}</div>
-              <paper-icon-button hidden$=[[!license.editable]] class="deleteButton" icon="remove" on-tap="removeContributor"></paper-icon-button>
-            </paper-material>
-          </div>
-        </template>
-
-        <BR>
-        <metadata-editor id="metadataEditor" label="License Specific Metadata" metadata="[[license.metadata]]" editable="[[license.editable]]"></metadata-editor>
       </div>
 
     </paper-material>

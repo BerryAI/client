@@ -58,6 +58,10 @@ Polymer({
     return address ? address : "Unreleased";
   },
 
+  _shouldHideShareholderMessage: function(e) {
+    return this.license.contributors.length == 0 || this.sumOfRoyalties(this.license.royalties) == 0;
+  },
+
   sumOfRoyalties: function(royalties) {
     var total = 0;
     royalties.forEach(function (r) {
@@ -85,6 +89,22 @@ Polymer({
     var that = this;
     this.processAndClearOnEnter(e, function(value) {
       that.addRoyalty(value);
+    });
+  },
+
+  addNewRoyalty : function() {
+    this.push('license.royalties', {
+      name: '',
+      address: '',
+      amount: 0
+    });
+  },
+
+  addNewContributor : function() {
+    this.push('license.contributors', {
+      name: '',
+      address: '',
+      shares: 1
     });
   },
 
