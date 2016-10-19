@@ -2,10 +2,10 @@ var request = require("request");
 var fs = require("fs");
 function MusicoinConnector(blockchain) {
   this.blockchain = blockchain;
-  this.musicoinCatalogURL = "http://dev.catalog.musicoin.org/api/license/search";
+  this.musicoinCatalogURL = "http://catalog.musicoin.org/api/license/search";
   this.musicoinListURL = "http://catalog.musicoin.org/api/pages/list";
   this.musicoinContentURL = "http://catalog.musicoin.org/api/page/content";
-  this.musicoinMyWorksURL = "http://dev.catalog.musicoin.org/api/myworks";
+  this.musicoinMyWorksURL = "http://catalog.musicoin.org/api/works/list";
   this.favoritesFile = 'favorites.json';
   this.playbackPaymentPercentage = 70;
 
@@ -24,40 +24,25 @@ MusicoinConnector.prototype.loadMyWorks = function (callback) {
     json: true
   }, function (error, response, body) {
     if (!error && response.statusCode === 200 && body && body.success) {
-      var unlisted = [];
-      var listed = [];
-      // body.result.forEach(function (next) {
-      //   var work = this.createWorkFromServerItem(next);
-      //   if (next.is_listed) {
-      //     listed.push(work);
-      //   }
-      //   else {
-      //     unlisted.push(work)
-      //   }
-      // }.bind(this));
+      var works = body.result;
 
-      // var ourTimesWork = "0x2090ca20502b06f99026d78ec97bc00a993ed069";
-      this.blockchain.listWorksForOwner(blockchain.getSelectedAccount())
-        .then(function (works) {
-          // get a promise for each work's license list
-          var allLicensesPromises = works.map(function(work) {
-            return this.blockchain.listLicensesForWork(work)
-          }.bind(this));
+      // get a promise for each work's license list
+      var allLicensesPromises = works.map(function(work) {
+        return this.blockchain.listLicensesForWork(work.contract_address)
+      }.bind(this));
 
-          // wait for them to return, then put them back together with the work
-          Promise.all(allLicensesPromises).then(function(licenseLists) {
-            var allLocal = works.map(function(work, idx) {
-              return this.createWorkFromAddress(work, licenseLists[idx]);
-            }.bind(this));
-
-            callback([
-              {name: "Listed", contracts: listed},
-              {name: "Unlisted", contracts: unlisted},
-              {name: "Local", contracts: allLocal}
-            ]);
-
-          }.bind(this));
+      // wait for them to return, then put them back together with the work
+      Promise.all(allLicensesPromises).then(function(licenseLists) {
+        var allWorkItemPromises = works.map(function(work, idx) {
+          return this.createWorkFromAddress(work.contract_address, licenseLists[idx]);
         }.bind(this));
+
+        Promise.all(allWorkItemPromises).then(function (allWorkItems) {
+          callback([
+            {name: "My Works", contracts: allWorkItems}
+          ]);
+        });
+      }.bind(this));
     }
     else {
       console.log(error);
@@ -117,15 +102,15 @@ MusicoinConnector.prototype.convertCategoryFormat = function (serverFormat) {
   return output;
 };
 
-MusicoinConnector.prototype.addFavorite = function (contractId) {
-  var contractIds = this.loadFavoritesIdsSync();
-  if (!contractIds.includes(contractId)) {
-    contractIds.push(contractId);
-    fs.writeFile(this.favoritesFile, JSON.stringify(contractIds), function (err) {
+MusicoinConnector.prototype.addFavorite = function (address) {
+  var addresses = this.loadFavoritesIdsSync();
+  if (!addresses.includes(address)) {
+    addresses.push(address);
+    fs.writeFile(this.favoritesFile, JSON.stringify(addresses), function (err) {
       if (err)
         console.log(err);
       else
-        console.log("Added favorite! " + contractId);
+        console.log("Added favorite! " + address);
     });
   }
 };
@@ -135,24 +120,24 @@ MusicoinConnector.prototype.loadFavoritesIdsSync = function() {
   var favsText = fs.existsSync(this.favoritesFile)
     ? fs.readFileSync(this.favoritesFile, 'utf8')
     : "";
-  var contractIds = [];
+  var addresses = [];
   if (favsText) {
     try {
-      contractIds = JSON.parse(favsText);
+      addresses = JSON.parse(favsText);
     }
     catch (e) {
       console.log(e);
     }
   }
-  return contractIds;
+  return addresses;
 };
 
 MusicoinConnector.prototype.loadFavoritesFromFile = function (callback) {
   fs.readFile(this.favoritesFile, 'utf8', function (err, data) {
     if (err) throw err;
-    var contractIds = this.loadFavoritesIdsSync();
+    var addresses = this.loadFavoritesIdsSync();
     var items = [];
-    contractIds.forEach(function (addr) {
+    addresses.forEach(function (addr) {
       var contract = this.createContractItemFromAddress(addr);
       if (contract) items.push(contract);
     }.bind(this))
@@ -171,17 +156,17 @@ MusicoinConnector.prototype.createContractGroup = function (serverGroup) {
   return group;
 };
 
-MusicoinConnector.prototype.createContractItemFromAddress = function (_contractId) {
+MusicoinConnector.prototype.createContractItemFromAddress = function (_address) {
   try {
-    var ppp = this.blockchain.getLicenseContractInstance(_contractId);
+    var ppp = this.blockchain.getLicenseContractInstance(_address);
     var work = this.blockchain.getWorkContractInstance(ppp.workAddress());
-    console.log(_contractId + " workAddress: " + ppp.workAddress());
-    console.log(_contractId + " weiPerPlay: " + ppp.weiPerPlay());
-    console.log(_contractId + " playCount: " + ppp.playCount());
-    console.log(_contractId + " artists: " + work.artist());
-    console.log(_contractId + " title: " + work.title());
+    console.log(_address + " workAddress: " + ppp.workAddress());
+    console.log(_address + " weiPerPlay: " + ppp.weiPerPlay());
+    console.log(_address + " playCount: " + ppp.playCount());
+    console.log(_address + " artists: " + work.artist());
+    console.log(_address + " title: " + work.title());
     return {
-      contractId: _contractId,
+      address: _address,
       album: "",
       artist: work.artist(),
       track: work.title(),
@@ -212,18 +197,34 @@ MusicoinConnector.prototype.getCategories = function (callback) {
   }.bind(this));
 };
 
-MusicoinConnector.prototype.createWorkFromAddress = function (_contractId, licenseAddresses) {
-  var work = this.blockchain.getWorkContractInstance(_contractId);
-  return {
-    contractId: _contractId,
+MusicoinConnector.prototype.createWorkFromAddress = function (_address, licenseAddresses) {
+  var work = this.blockchain.getWorkContractInstance(_address);
+  var promises = licenseAddresses.map(function (addr) {
+    return this.getLicenseDetails(addr);
+  }.bind(this));
+
+  var output = {
+    address: _address,
     album: "",
     artist: work.artist(),
     track: work.title(),
     type: work.workType(),
     img: musicoin.convertToUrl(work.imageUrl()),
-    metadata: this.loadMetadataFromUrl(musicoin.convertToUrl(work.metadataUrl())),
-    licenses: licenseAddresses.map(this.getLicenseDetails)
+    metadata: [],
+    licenses: []
   };
+
+  var metadataUrl = musicoin.convertToUrl(work.metadataUrl());
+  var metadataPromise = this.loadMetadataFromUrl(metadataUrl);
+  return Promise.all(promises)
+    .then(function (licenses) {
+      output.licenses = licenses;
+      return metadataPromise;
+    })
+    .then(function(metadata) {
+      output.metadata = metadata;
+      return output;
+    });
 };
 
 MusicoinConnector.prototype.getLicenseDetails = function(licenseAddress) {
@@ -252,27 +253,41 @@ MusicoinConnector.prototype.getLicenseDetails = function(licenseAddress) {
     return output;
   }.bind(this);
 
-  return {
-    type: 0,
-    typeName: "PPP",
-    coinsPerPlay: this.blockchain.toMusicCoinUnits(license.weiPerPlay()),
-    address: licenseAddress,
-    editable: false,
-    releaseState: 3,
-    contributors: _buildContributorsFromLicense(license),
-    royalties: _buildRoyaltiesFromLicense(license),
-    metadata: [{key: "testKey", value: "testValue"}]
-  }
+  return this.loadMetadataFromUrl(musicoin.convertToUrl(license.metadataUrl())).then(function (metadata) {
+    return {
+      type: 0,
+      typeName: "PPP",
+      coinsPerPlay: this.blockchain.toMusicCoinUnits(license.weiPerPlay()),
+      address: licenseAddress,
+      editable: false,
+      releaseState: 3,
+      contributors: _buildContributorsFromLicense(license),
+      royalties: _buildRoyaltiesFromLicense(license),
+      metadata: metadata
+    }
+  }.bind(this));
 };
 
 MusicoinConnector.prototype.loadMetadataFromUrl = function(url) {
-  // TODO
-  return [];
+  return new Promise(function (resolve, reject){
+    return request({
+      url: url,
+      json: true
+    }, function (error, response, body) {
+      if (!error && response.statusCode === 200) {
+        resolve(body);
+      }
+      else {
+        console.log("Unable to load metadata: " + error);
+        resolve([]);
+      }
+    }.bind(this))
+  }.bind(this));
 };
 
 MusicoinConnector.prototype.createWorkFromServerItem = function (serverItem) {
   return {
-    contractId: serverItem.contract_id,
+    address: serverItem.contract_id,
     album: serverItem.album_name,
     artist: serverItem.artist_name,
     track: serverItem.song_name,

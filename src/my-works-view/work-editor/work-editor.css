@@ -191,8 +191,6 @@ paper-input {
 }
 
 .main-section {
-    margin-left: 20px;
-    margin-right: 20px;
 }
 
 .license-address {
@@ -247,7 +245,6 @@ paper-input {
 .top-area {
     display: flex;
     flex-direction: row;
-    padding: 5px;
 }
 
 .metadata-area {

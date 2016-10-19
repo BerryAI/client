@@ -5,10 +5,6 @@ Polymer({
       type: Object,
       reflectToAttribute: true
     },
-    work: {
-      type: Object,
-      reflectToAttribute: true
-    },
     expanded: {
       type: Boolean,
       value: false
@@ -48,7 +44,6 @@ Polymer({
     this.fire('release-license', {
       license: this.license,
       audioFile: this.selectedAudio,
-      work: this.work,
       editor: this
     })
   },

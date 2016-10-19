@@ -1,5 +1,7 @@
 var request = require("request");
 var fs = require("fs");
+var tmp = require("tmp");
+
 function IPFSConnector() {
   this.ipfsEndpoint = "http://localhost:8080/ipfs/";
   this.ipfsAPIEndpoint = "http://localhost:5001/";
@@ -8,6 +10,22 @@ function IPFSConnector() {
 
 IPFSConnector.prototype.asUrl = function (hash) {
   return this.ipfsEndpoint + hash;
+};
+
+IPFSConnector.prototype.addString = function (text) {
+  return new Promise(function (resolve, reject) {
+    try {
+      var tmpobj = tmp.fileSync();
+      console.log("File: " + tmpobj.name);
+      fs.writeFileSync(tmpobj.name, text);
+      return this.add(tmpobj.name).then(function (hash) {
+        tmpobj.removeCallback();
+        resolve(hash);
+      });
+    } catch (e) {
+      reject(e);
+    }
+  }.bind(this));
 };
 
 IPFSConnector.prototype.add = function (path) {

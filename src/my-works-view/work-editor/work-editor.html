@@ -28,11 +28,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <dom-module id="work-editor">
   <link rel="import" type="css" href="work-editor.css">
   <template>
-    <div>
+    <div style="margin: 10px">
       <div class="header" on-tap="printData">
         <paper-icon-button icon="icons:arrow-back" class="back-button" on-tap="handleBackClick"></paper-icon-button>
         {{work.track}}
       </div>
+      <div class="license-address">{{work.address}}</div>
       <div class="top-area">
         <div class="image-area">
           <iron-image id="fileSelector" class="work-image" src="{{work.img}}" sizing="cover"></iron-image>
@@ -51,7 +52,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           </paper-dropdown-menu>
         </div>
       </div>
-      {{work.contractId}}
       <div class="main-section">
         <metadata-editor id="metadataEditor" label="Work Metadata" metadata="[[work.metadata]]" editable="[[editable]]"></metadata-editor>
         <br>

@@ -72,7 +72,7 @@ Polymer({
   },
 
   onReleaseSuccess: function(address) {
-    this.status = address;
+    this.status = "Success!";
     this.releasePending = false;
     this.set("work.address", address);
     this.editable = false;

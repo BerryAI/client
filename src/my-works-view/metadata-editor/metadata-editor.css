@@ -15,7 +15,6 @@ h3 {
 
 .header {
     display: flex;
-    margin: 5px;
     font-size: 2em;
     font-weight: lighter;
 }

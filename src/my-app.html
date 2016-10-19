@@ -301,8 +301,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <h1>{{artist}}: {{track}}</h1>
       <paper-material class="track-detail-image" style="background-image: url('{{artworkUrl}}');">
       </paper-material>
-
-      {{contractId}}
     </div>
 
     <div id="txDetailView" class="detailView">
@@ -570,10 +568,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       playSelection: function(item) {
         var ppp = this.getLicenseContractInstance(item);
-        var weiPerPlay = blockchain.getWeiPerPlay(item.contractId);
+        var weiPerPlay = blockchain.getWeiPerPlay(item.address);
         var transactionInfo = {
             item: item,
-            contractId: item.contractId,
+            address: item.address,
             ppp: ppp,
             weiPerPlay: weiPerPlay
         };
@@ -583,7 +581,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       getLicenseContractInstance: function(item) {
-        return blockchain.getLicenseContractInstance(item.contractId);
+        return blockchain.getLicenseContractInstance(item.address);
       },
 
       getPermission: function(msg, value, forcePrompt, onGranted) {
@@ -630,7 +628,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       sendTip: function() {
         var txInfo = this.currentTransactionInfo;
         if (txInfo) {
-          musicoinService.addFavorite(txInfo.contractId);
+          musicoinService.addFavorite(txInfo.address);
           var amount = blockchain.toIndivisibleUnits(1);
           this.getPermission("Tip for '" + this.track + "' by " + this.artist, amount, false, function(){
             musicoin.addPendingPayment(amount);
@@ -724,8 +722,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
 
       updateMyWorksView: function() {
-        console.log("updateMyWorksView: " + this.subroute.path);
-        var pageName = this.subroute.path.substring(1); // "/page-name" -> "page-name"
         musicoinService.loadMyWorks(function (groups) {
           musicoin.$.works.setDataModel(groups);
         })

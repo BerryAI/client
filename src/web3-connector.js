@@ -35,8 +35,8 @@ Web3Connector.prototype.getUserBalance = function() {
     return this.web3.eth.getBalance(this.selectedAccount);
 };
 
-Web3Connector.prototype.getWeiPerPlay = function(contractId) {
-    return this.getLicenseContractInstance(contractId).weiPerPlay();
+Web3Connector.prototype.getWeiPerPlay = function(address) {
+    return this.getLicenseContractInstance(address).weiPerPlay();
 };
 
 Web3Connector.prototype.ppp = function(pppRequest, pwd, callback) {
@@ -87,15 +87,15 @@ Web3Connector.prototype.tip = function(tipRequest, pwd, callback) {
         .catch(function(err) { callback.onFailure(err, true)});
 };
 
-Web3Connector.prototype.getLicenseContractInstance = function(contractId) {
-    return this.web3.eth.contract(this.getContractAbiFromCatalog(contractId)).at(contractId);
+Web3Connector.prototype.getLicenseContractInstance = function(address) {
+    return this.web3.eth.contract(this.getContractAbiFromCatalog(address)).at(address);
 };
 
-Web3Connector.prototype.getWorkContractInstance = function(contractId) {
-    return this.web3.eth.contract(workAbi).at(contractId);
+Web3Connector.prototype.getWorkContractInstance = function(address) {
+    return this.web3.eth.contract(workAbi).at(address);
 };
 
-Web3Connector.prototype.getContractAbiFromCatalog = function(contractId) {
+Web3Connector.prototype.getContractAbiFromCatalog = function(address) {
     // TODO: The abi of contracts will change depending on the version
     return pppMvp2Abi;
 };
