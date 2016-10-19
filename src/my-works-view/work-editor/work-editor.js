@@ -91,6 +91,7 @@ Polymer({
       coinsPerPlay: 1,
       address: "",
       editable: true,
+      releaseState: 0,
       contributors: [],
       royalties: [],
       metadata: []

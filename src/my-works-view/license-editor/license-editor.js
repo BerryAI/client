@@ -17,6 +17,11 @@ Polymer({
       type: Boolean,
       value: false,
       reflectToAttribute: true
+    },
+    releaseFailed: {
+      type: Boolean,
+      value: false,
+      reflectToAttribute: true
     }
   },
   ready: function () {
@@ -32,7 +37,6 @@ Polymer({
 
     this.selectedAudioText = "Select audio file";
     this.addressToNameMapping = [];
-    this.status = this.license.address ? this.license.address : "Unreleased";
   },
 
   toggleLicenseBody: function() {
@@ -53,9 +57,9 @@ Polymer({
     return coinsPerPlay - this.sumOfRoyalties(this.license.royalties);
   },
 
-  _computeLicenseText: function(address, status) {
-    if (status) return status;
-    return address ? address : "Unreleased";
+  _computeLicenseHeaderText: function() {
+    var values = ["Unreleased", "Pending...", "Failed!", this.license.address, this.license.address + " (Verified)"];
+    return values[this.license.releaseState];
   },
 
   _shouldHideShareholderMessage: function(e) {
@@ -64,6 +68,10 @@ Polymer({
 
   _shouldHideRoyaltyInstructions: function(e) {
     return this.license.contributors.length > 0 || this.license.royalties.length > 0;
+  },
+
+  _isPending: function() {
+    return this.license.releaseState == 1;
   },
 
   sumOfRoyalties: function(royalties) {
@@ -214,20 +222,25 @@ Polymer({
     }
   },
 
+  testState: function() {
+    this.set("license.releaseState", (this.license.releaseState + 1)%5);
+  },
+
+
   onReleasePending: function() {
     this.status = "Pending...";
-    this.releasePending = true;
+    this.set("license.releaseState", 1);
   },
 
   onReleaseSuccess: function(address) {
     this.status = address;
-    this.releasePending = false;
+    this.set("license.releaseState", 3);
     this.set("license.address", address);
     this.set("license.editable", false);
   },
 
   onReleaseFailure: function() {
-    this.releasePending = false;
+    this.set("license.releaseState", 2);
     this.status = "Failed!";
     console.log("Failed");
   }
