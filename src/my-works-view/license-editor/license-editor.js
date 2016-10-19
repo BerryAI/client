@@ -12,6 +12,11 @@ Polymer({
     expanded: {
       type: Boolean,
       value: false
+    },
+    releasePending: {
+      type: Boolean,
+      value: false,
+      reflectToAttribute: true
     }
   },
   ready: function () {
@@ -26,6 +31,8 @@ Polymer({
     }.bind(this);
 
     this.selectedAudioText = "Select audio file";
+    this.addressToNameMapping = [];
+    this.status = this.license.address ? this.license.address : "Unreleased";
   },
 
   toggleLicenseBody: function() {
@@ -36,15 +43,18 @@ Polymer({
     e.stopPropagation();
     this.fire('release-license', {
       license: this.license,
-      work: this.work
+      audioFile: this.selectedAudio,
+      work: this.work,
+      editor: this
     })
   },
 
-  _computeRemainingPrice: function(price, change) {
-    return price - this.sumOfRoyalties(this.license.royalties);
+  _computeRemainingCoinsPerPlay: function(coinsPerPlay, change) {
+    return coinsPerPlay - this.sumOfRoyalties(this.license.royalties);
   },
 
-  _computeLicenseText: function(address) {
+  _computeLicenseText: function(address, status) {
+    if (status) return status;
     return address ? address : "Unreleased";
   },
 
@@ -59,7 +69,7 @@ Polymer({
   updateUserMapping: function (e) {
     var item = e.model.royalty ? e.model.royalty : e.model.contributor;
     if (item)
-      addressToNameMapping[item.address] = item.name;
+      this.addressToNameMapping[item.address] = item.name;
   },
 
   addContributorOnEnter: function (e) {
@@ -120,8 +130,8 @@ Polymer({
 
   lookupContributorByName: function (name) {
     var found;
-    for (var addr in addressToNameMapping) {
-      if (addressToNameMapping[addr] == name) {
+    for (var addr in this.addressToNameMapping) {
+      if (this.addressToNameMapping[addr] == name) {
         found = addr;
       }
     }
@@ -134,7 +144,7 @@ Polymer({
   },
 
   lookupContributorByAddress: function (addr) {
-    var found = addressToNameMapping[addr] || "(name)";
+    var found = this.addressToNameMapping[addr] || "(name)";
     return {
       name: found,
       address: addr
@@ -176,5 +186,23 @@ Polymer({
       this.set('selectedAudioText', path.basename(filePath));
       this.set('selectedAudioSize', fileSizeInMegabytes.toFixed(1) + " mb");
     }
+  },
+
+  onReleasePending: function() {
+    this.status = "Pending...";
+    this.releasePending = true;
+  },
+
+  onReleaseSuccess: function(address) {
+    this.status = address;
+    this.releasePending = false;
+    this.set("license.address", address);
+    this.set("license.editable", false);
+  },
+
+  onReleaseFailure: function() {
+    this.releasePending = false;
+    this.status = "Failed!";
+    console.log("Failed");
   }
 });

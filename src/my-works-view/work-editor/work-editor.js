@@ -14,6 +14,7 @@ Polymer({
     this.editable = true;
     this.licenses = [];
     this.metadata = [];
+    this.releaseButtonText = "Release";
     this.$.fileSelector.onclick = function() {
       if (this.editable) {
         this.$.imageFile.click();
@@ -27,7 +28,9 @@ Polymer({
         var corrected = "file:///" + filePath.split("\\").join("/");
         console.log("img path: " + filePath);
         console.log("img src: " + corrected);
+
         this.set('work.img', corrected);
+        this.set('work.imgFile', filePath);
       }
     }.bind(this);
   },
@@ -35,6 +38,7 @@ Polymer({
   setDataModel: function (newModel) {
     this.work = newModel.work;
     this.editable = newModel.editable;
+    this.status = this.work.contractId ? this.work.contractId : "";
   },
 
   printData: function () {
@@ -46,7 +50,9 @@ Polymer({
   },
 
   releaseWork: function() {
-    this.fire('release-work', this.getDataObject());
+    this.fire('release-work', {
+      editor: this,
+      work: this.getDataObject()});
   },
 
   handleBackClick: function () {
@@ -57,15 +63,29 @@ Polymer({
     this.push('work.licenses', this.createNewLicense());
   },
 
-  releaseLicense: function(e) {
-    alert("Releasing license from custom event: " + JSON.stringify(e.detail));
+  onReleasePending: function() {
+    this.status = "Pending...";
+    this.releasePending = true;
+  },
+
+  onReleaseSuccess: function(address) {
+    this.status = address;
+    this.releasePending = false;
+    this.set("work.address", address);
+    this.editable = false;
+  },
+
+  onReleaseFailure: function(err) {
+    this.releasePending = false;
+    this.status = "Failed!";
+    console.log("Filed to release work: " + err);
   },
 
   createNewLicense: function() {
     return {
       type: 0,
       typeName: "PPP",
-      price: 1,
+      coinsPerPlay: 1,
       address: "",
       editable: true,
       contributors: [],

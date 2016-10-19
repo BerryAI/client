@@ -26,9 +26,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <link rel="import" type="css" href="license-editor.css">
   <template>
     <paper-material class="license-item">
-      <paper-material elevation="2" class="license-item-header" on-tap="toggleLicenseBody">
-        <div>&#x266E;{{license.price}} [[license.typeName]]</div>
-        <div>[[_computeLicenseText(license.address)]]</div>
+      <paper-material elevation="2" class="license-item-header" pending$="[[releasePending]]" on-tap="toggleLicenseBody">
+        <div>&#x266E;{{license.coinsPerPlay}} [[license.typeName]]</div>
+        <div>[[status]]</div>
         <paper-icon-button mini icon="cloud-upload" hidden$=[[!license.editable]] on-tap="releaseLicense"></paper-icon-button>
         <paper-icon-button mini icon="done" hidden$=[[license.editable]]></paper-icon-button>
       </paper-material>
@@ -40,7 +40,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <div class="music-file-size">[[selectedAudioSize]]</div>
           </paper-material>
           <input hidden id="audioFile" type="file" value="{{selectedAudio}}">
-          <div class="license-item-body-price normal-margin">&#x266E;<input class="price" min=0 type=number disabled="[[!license.editable]]" value="{{license.price::input}}"></div>
+          <div class="license-item-body-price normal-margin">&#x266E;<input class="price" min=0 type=number disabled="[[!license.editable]]" value="{{license.coinsPerPlay::input}}"></div>
           <paper-dropdown-menu class="normal-margin" disabled="[[!license.editable]]" label="License type">
             <paper-listbox selected="{{license.type}}" class="dropdown-content">
               <paper-item>PPP</paper-item>
@@ -50,7 +50,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         <div>
           Royalties
-          <paper-input hidden$={{!license.editable}} class="contributor-input" on-keydown="addRoyaltyOnEnter" label="add royalty"></paper-input>
+          <paper-input hidden$={{!license.editable}} class="contributor-input" on-keydown="addRoyaltyOnEnter" label="add royalty address"></paper-input>
         </div>
         <template is="dom-repeat" items="{{license.royalties}}" as="royalty">
           <div>
@@ -66,7 +66,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <BR>
 
         <div>
-          Contributors (sharing &#x266E;{{_computeRemainingPrice(license.price, license.royalties.*)}})
+          Contributors (sharing &#x266E;{{_computeRemainingCoinsPerPlay(license.coinsPerPlay, license.royalties.*)}})
           <paper-input hidden$={{!license.editable}} class="contributor-input" on-keydown="addContributorOnEnter" label="add contributor"></paper-input>
         </div>
         <template is="dom-repeat" items="{{license.contributors}}" as="contributor">

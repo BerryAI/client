@@ -54,23 +54,31 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 font-weight: lighter;
             }
 
+            .description {
+              max-width: 180px;
+              height: 1.1em;
+              display: inline-flex;
+              white-space: nowrap;
+              overflow: hidden;
+            }
+
             .title {
                 display: inline-block;
                 margin: 5px;
             }
 
             .artist {
-                color: whitesmoke;
+              font-weight: lighter;
+              font-size: small;
             }
 
             .album {
-                font-weight: lighter;
-                font-size: small;
+              font-weight: lighter;
+              font-size: small;
             }
 
             .track {
-                font-weight: lighter;
-                font-size: small;
+              color: whitesmoke;
             }
 
             .title-details {
@@ -115,9 +123,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                             <div class="show-off"></div>
                         </paper-card>
                         <p class="title-details">
-                            <span class="artist">{{item.artist}}</span><br>
-                            <span class="album">{{item.album}}</span><br>
-                            <span class="track">{{item.track}}</span><br>
+                          <span class="description track">{{item.track}}</span><br>
+                          <span class="description artist">{{item.artist}}</span><br>
                         </p>
                     </div>
                 </template>

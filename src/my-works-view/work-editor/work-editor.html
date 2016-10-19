@@ -64,7 +64,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           </template>
         </div>
 
-        <div style="height:50px; position: relative">
+        <div class="status-bar" pending$="[[releasePending]]">
+          <div class="status-message">[[status]]</div>
           <paper-button hidden$="[[!editable]]" class="release-button" raised on-tap="releaseWork">
             <iron-icon icon="cloud-upload"></iron-icon>
             Release

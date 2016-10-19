@@ -26,16 +26,38 @@ MusicoinConnector.prototype.loadMyWorks = function (callback) {
     if (!error && response.statusCode === 200 && body && body.success) {
       var unlisted = [];
       var listed = [];
-      body.result.forEach(function (next) {
-        var work = this.createWorkFromServerItem(next);
-        if (next.is_listed) {
-          listed.push(work);
-        }
-        else {
-          unlisted.push(work)
-        }
-      }.bind(this));
-      callback(listed, unlisted);
+      // body.result.forEach(function (next) {
+      //   var work = this.createWorkFromServerItem(next);
+      //   if (next.is_listed) {
+      //     listed.push(work);
+      //   }
+      //   else {
+      //     unlisted.push(work)
+      //   }
+      // }.bind(this));
+
+      // var ourTimesWork = "0x2090ca20502b06f99026d78ec97bc00a993ed069";
+      this.blockchain.listWorksForOwner(blockchain.getSelectedAccount())
+        .then(function (works) {
+          // get a promise for each work's license list
+          var allLicensesPromises = works.map(function(work) {
+            return this.blockchain.listLicensesForWork(work)
+          }.bind(this));
+
+          // wait for them to return, then put them back together with the work
+          Promise.all(allLicensesPromises).then(function(licenseLists) {
+            var allLocal = works.map(function(work, idx) {
+              return this.createWorkFromAddress(work, licenseLists[idx]);
+            }.bind(this));
+
+            callback([
+              {name: "Listed", contracts: listed},
+              {name: "Unlisted", contracts: unlisted},
+              {name: "Local", contracts: allLocal}
+            ]);
+
+          }.bind(this));
+        }.bind(this));
     }
     else {
       console.log(error);
@@ -43,7 +65,23 @@ MusicoinConnector.prototype.loadMyWorks = function (callback) {
   }.bind(this));
 };
 
+MusicoinConnector.prototype.getWorkLicenseAddresses = function(workAddress) {
+  return this.blockchain.listLicensesForWork(workAddress)
+}
+
 MusicoinConnector.prototype.loadContractsFromURL = function (page, keywords, callback) {
+  if (page == "local") {
+    this.blockchain.listRecentLicenses(10000).then(function (list) {
+      var items = [];
+      list.forEach(function (licenseAddress) {
+        items.push(this.createContractItemFromAddress(licenseAddress));
+      }.bind(this));
+      callback([{name: "Favorites", contracts: items}]);
+    }.bind(this));
+    return;
+  }
+
+
   if (page == "favorites") {
     callback(this.loadFavoritesFromFile(callback));
     return;
@@ -70,6 +108,7 @@ MusicoinConnector.prototype.getPlaybackPaymentPercentage = function () {
 
 MusicoinConnector.prototype.convertCategoryFormat = function (serverFormat) {
   var output = [];
+
   var categories = serverFormat;
   for (var c in categories) {
     output.push(this.createContractGroup(categories[c]));
@@ -78,24 +117,39 @@ MusicoinConnector.prototype.convertCategoryFormat = function (serverFormat) {
 };
 
 MusicoinConnector.prototype.addFavorite = function (contractId) {
-  fs.readFile(this.favoritesFile, 'utf8', function (err, data) {
-    var contractIds = err ? [] : JSON.parse(data);
-    if (!contractIds.includes(contractId)) {
-      contractIds.push(contractId);
-      fs.writeFile(this.favoritesFile, JSON.stringify(contractIds), function (err) {
-        if (err)
-          console.log(err);
-        else
-          console.log("Added favorite! " + contractId);
-      });
+  var contractIds = this.loadFavoritesIdsSync();
+  if (!contractIds.includes(contractId)) {
+    contractIds.push(contractId);
+    fs.writeFile(this.favoritesFile, JSON.stringify(contractIds), function (err) {
+      if (err)
+        console.log(err);
+      else
+        console.log("Added favorite! " + contractId);
+    });
+  }
+};
+
+MusicoinConnector.prototype.loadFavoritesIdsSync = function() {
+  console.log("home: " + process.env.APPDATA || (process.platform == 'darwin' ? process.env.HOME + 'Library/Preferences' : '/var/local'));
+  var favsText = fs.existsSync(this.favoritesFile)
+    ? fs.readFileSync(this.favoritesFile, 'utf8')
+    : "";
+  var contractIds = [];
+  if (favsText) {
+    try {
+      contractIds = JSON.parse(favsText);
     }
-  }.bind(this));
+    catch (e) {
+      console.log(e);
+    }
+  }
+  return contractIds;
 };
 
 MusicoinConnector.prototype.loadFavoritesFromFile = function (callback) {
   fs.readFile(this.favoritesFile, 'utf8', function (err, data) {
     if (err) throw err;
-    var contractIds = JSON.parse(data);
+    var contractIds = this.loadFavoritesIdsSync();
     var items = [];
     contractIds.forEach(function (contract) {
       items.push(this.createContractItemFromAddress(contract));
@@ -110,19 +164,21 @@ MusicoinConnector.prototype.createContractGroup = function (serverGroup) {
   serverGroup.result.forEach(function (item) {
     group.contracts.push(this.createContractItemFromAddress(item.contract_id));
   }.bind(this));
+
   return group;
 };
 
 MusicoinConnector.prototype.createContractItemFromAddress = function (_contractId) {
-  var ppp = this.blockchain.getContractInstance(_contractId);
-  var metadata = JSON.parse(ppp.metadata());
+  var ppp = this.blockchain.getLicenseContractInstance(_contractId);
+  var work = this.blockchain.getWorkContractInstance(ppp.workAddress());
+  console.log(_contractId + " weiPerPlay: " + ppp.weiPerPlay());
   return {
     contractId: _contractId,
-    album: metadata.album,
-    artist: metadata.artist,
-    track: metadata.track,
+    album: "",
+    artist: work.artist(),
+    track: work.title(),
     playCount: ppp.playCount(),
-    img: musicoin.convertToUrl(metadata.artworkUrl)
+    img: musicoin.convertToUrl(work.imageUrl())
   };
 };
 
@@ -134,12 +190,70 @@ MusicoinConnector.prototype.getCategories = function (callback) {
     if (!error && response.statusCode === 200) {
       var output = body.pages;
       output.push({id: "favorites", name: "My Favorites"});
+      output.push({id: "local", name: "Local"});
       callback(output);
     }
     else {
       console.log(error);
     }
   }.bind(this));
+};
+
+MusicoinConnector.prototype.createWorkFromAddress = function (_contractId, licenseAddresses) {
+  var work = this.blockchain.getWorkContractInstance(_contractId);
+  return {
+    contractId: _contractId,
+    album: "",
+    artist: work.artist(),
+    track: work.title(),
+    type: work.workType(),
+    img: musicoin.convertToUrl(work.imageUrl()),
+    metadata: this.loadMetadataFromUrl(musicoin.convertToUrl(work.metadataUrl())),
+    licenses: licenseAddresses.map(this.getLicenseDetails)
+  };
+};
+
+MusicoinConnector.prototype.getLicenseDetails = function(licenseAddress) {
+  var license = this.blockchain.getLicenseContractInstance(licenseAddress);
+  var _buildContributorsFromLicense = function (license) {
+
+    var address;
+    var output = [];
+    for (var idx = 0; ((address = license.contributors(idx)) != "0x"); idx++) {
+      output.push({
+        address: address,
+        shares: license.contributorShares(idx)});
+    }
+    return output;
+  };
+
+  var _buildRoyaltiesFromLicense = function (license) {
+    var address;
+    var output = [];
+    for (var idx = 0; ((address = license.royalties(idx)) != "0x"); idx++) {
+      output.push({
+        address: address,
+        amount: this.blockchain.toMusicCoinUnits(license.royaltyAmounts(idx))
+      });
+    }
+    return output;
+  }.bind(this);
+
+  return {
+    type: 0,
+    typeName: "PPP",
+    coinsPerPlay: this.blockchain.toMusicCoinUnits(license.weiPerPlay()),
+    address: licenseAddress,
+    editable: false,
+    contributors: _buildContributorsFromLicense(license),
+    royalties: _buildRoyaltiesFromLicense(license),
+    metadata: [{key: "testKey", value: "testValue"}]
+  }
+};
+
+MusicoinConnector.prototype.loadMetadataFromUrl = function(url) {
+  // TODO
+  return [];
 };
 
 MusicoinConnector.prototype.createWorkFromServerItem = function (serverItem) {
@@ -154,7 +268,7 @@ MusicoinConnector.prototype.createWorkFromServerItem = function (serverItem) {
     licenses: [{
       type: 0,
       typeName: "PPP",
-      price: 1,
+      coinsPerPlay: 1,
       address: serverItem.contract_id,
       editable: false,
       contributors: [], //

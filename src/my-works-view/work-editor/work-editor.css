@@ -305,11 +305,11 @@ paper-input {
 }
 
 .release-button {
-    position: absolute;
-    bottom: 0;
+    top: 0;
     right: 0;
     background-color: #2176bd;
     color: whitesmoke;
+    margin: 0;
 }
 
 .contributor-tag {
@@ -366,4 +366,36 @@ paper-input {
     background: rgba(255,255,255, 0.05);
     color: #a1a1a1;
     padding: 2px;
+}
+
+.status-bar {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.status-message {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-left: 5px;
+}
+
+.status-bar[pending] {
+    background-color: rgba(33, 118, 189, 0.12);
+    background-size: 64px 64px;
+    background-image: linear-gradient(135deg,
+    rgba(255, 255, 255, .05) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, .05) 50%,
+    rgba(255, 255, 255, .05) 75%,
+    transparent 75%,
+    transparent);
+
+    animation: animate-stripes 3s linear infinite;
+}
+
+@keyframes animate-stripes {
+    0% {background-position: 0 0;} 100% {background-position: 128px 0;}
 }

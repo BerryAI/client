@@ -16,7 +16,9 @@
     "polymer-cli": "^0.16.0",
     "request": "^2.75.0",
     "serve-favicon": "~2.3.0",
-    "web3": "^0.17.0-beta"
+    "tmp": "0.0.29",
+    "web3": "^0.17.0-beta",
+    "ipfsUtils": "file:src/ipfs-connector.js"
   },
   "window": {
     "title": "Musicoin demo",
