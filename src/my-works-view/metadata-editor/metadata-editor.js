@@ -15,6 +15,14 @@ Polymer({
     console.log("Metadata editable: " + this.editable);
   },
 
+  _shouldHideHeaderRow: function (e) {
+    return this.metadata.length == 0;
+  },
+
+  _shouldHideInstructions: function() {
+    return !this.editable || this.metadata.length > 0;
+  },
+
   addMetadataRow: function() {
     this.push('metadata', {key: '', value: ''});
   },

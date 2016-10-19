@@ -62,6 +62,10 @@ Polymer({
     return this.license.contributors.length == 0 || this.sumOfRoyalties(this.license.royalties) == 0;
   },
 
+  _shouldHideRoyaltyInstructions: function(e) {
+    return this.license.contributors.length > 0 || this.license.royalties.length > 0;
+  },
+
   sumOfRoyalties: function(royalties) {
     var total = 0;
     royalties.forEach(function (r) {

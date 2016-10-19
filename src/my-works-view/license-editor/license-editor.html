@@ -53,7 +53,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <div class="royalty-header">Royalties</div>
             <div>
               <paper-button on-tap="addNewRoyalty" raised elevation="1" hidden$=[[!license.editable]]>Add fixed payment</paper-button>
-              <paper-button on-tap="addNewContributor" raised elevation="1" hidden$=[[!license.editable]]>Add shares</paper-button>
+              <paper-button on-tap="addNewContributor" raised elevation="1" hidden$=[[!license.editable]]>Add shareholder</paper-button>
             </div>
             <!--<paper-input hidden$={{!license.editable}} class="contributor-input" on-keydown="addRoyaltyOnEnter" label="add royalty address"></paper-input>-->
           </div>
@@ -84,9 +84,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             </div>
           </template>
           <div hidden$="{{_shouldHideShareholderMessage(license.contributors.*, license.royalties.*)}}">After paying fixed payments, shareholders will share <u>&#x266E;{{_computeRemainingCoinsPerPlay(license.coinsPerPlay, license.royalties.*)}}</u> between them according to their shares entered above</div>
+          <div class="royalty-instructions" hidden$="{{_shouldHideRoyaltyInstructions(license.contributors.*, license.royalties.*)}}">
+            Here you can determine how each payment will be distributed.
+            Fixed payments are paid first after each play event, with the remaining amount distributed to shareholds.
+            Fixed payments are not made when a tip is received.
+          </div>
         </paper-material>
         <paper-material class="form-section" elevation="0">
-          <metadata-editor id="metadataEditor" label="License Specific Metadata" metadata="[[license.metadata]]" editable="[[license.editable]]"></metadata-editor>
+          <metadata-editor id="metadataEditor" label="License Metadata" metadata="[[license.metadata]]" editable="[[license.editable]]"></metadata-editor>
         </paper-material>
 
       </div>

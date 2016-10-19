@@ -27,7 +27,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <dom-module id="metadata-editor">
   <link rel="import" type="css" href="metadata-editor.css">
   <template>
-    <div>
+    <div class="header">
       {{label}}
       <paper-icon-button icon="add" on-tap="addMetadataRow" hidden$="[[!editable]]"></paper-icon-button>
     </div>
@@ -38,7 +38,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <col class="delete-column">
       </colgroup>
       <tbody>
-        <tr class="header-row">
+        <tr class="header-row" hidden$="{{_shouldHideHeaderRow(metadata.*)}}">
           <td class="field-column">Property</td>
           <td class="value-column">Value</td>
           <td class="delete-column"></td>
@@ -59,6 +59,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </template>
       </tbody>
     </table>
+    <div class="metadata-instructions" hidden$="{{_shouldHideInstructions(metadata.*, editable)}}">
+      Click the "+" symbol to add a new entry.  You can enter arbitrary properties and values
+    </div>
   </template>
   <script src="metadata-editor.js"></script>
 </dom-module>

@@ -13,6 +13,13 @@ h3 {
     margin-bottom: 0px;
 }
 
+.header {
+    display: flex;
+    margin: 5px;
+    font-size: 2em;
+    font-weight: lighter;
+}
+
 .metadata-area {
     display: flex;
     flex-direction: column;
@@ -44,7 +51,7 @@ h3 {
 }
 
 .delete-column {
-    width: 10%;
+    width: 20px;
 }
 
 .extended-metadata-input {
@@ -64,4 +71,11 @@ h3 {
     padding: 0;
     width: 20px;
     height: 20px;
+}
+
+.metadata-instructions {
+    text-align: justify;
+    color: #777676;
+    padding-left: 60px;
+    padding-right: 100px;
 }

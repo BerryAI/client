@@ -178,6 +178,7 @@ paper-input {
     margin-top: 10px;
     padding: 5px;
     margin-bottom: 20px;
+    min-height: 150px;
 }
 
 .shares {
@@ -296,4 +297,11 @@ paper-input {
     margin: 5px;
     font-size: 2em;
     font-weight: lighter;
+}
+
+.royalty-instructions {
+    text-align: justify;
+    color: #777676;
+    padding-left: 60px;
+    padding-right: 100px;
 }

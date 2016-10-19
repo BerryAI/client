@@ -399,3 +399,10 @@ paper-input {
 @keyframes animate-stripes {
     0% {background-position: 0 0;} 100% {background-position: 128px 0;}
 }
+
+.instructions {
+    text-align: justify;
+    color: #777676;
+    padding-left: 60px;
+    padding-right: 100px;
+}

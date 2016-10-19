@@ -38,7 +38,10 @@ Polymer({
   setDataModel: function (newModel) {
     this.work = newModel.work;
     this.editable = newModel.editable;
-    this.status = this.work.contractId ? this.work.contractId : "";
+  },
+
+  _shouldHideInstructions: function() {
+    return this.work.licenses.length > 0;
   },
 
   printData: function () {

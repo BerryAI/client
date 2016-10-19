@@ -51,25 +51,29 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           </paper-dropdown-menu>
         </div>
       </div>
-
+      {{work.contractId}}
       <div class="main-section">
-        <metadata-editor id="metadataEditor" label="Additional Metadata" metadata="[[work.metadata]]" editable="[[editable]]"></metadata-editor>
-        <div class="license-area" xhidden$="[[editable]]">
-          <h3>
-            Licenses
-            <paper-icon-button icon="add" on-tap="handleAddLicense"></paper-icon-button>
-          </h3>
-          <template is="dom-repeat" items="{{work.licenses}}" as="license">
-            <license-editor license="{{license}}" work="{{work}}"></license-editor>
-          </template>
-        </div>
-
+        <metadata-editor id="metadataEditor" label="Work Metadata" metadata="[[work.metadata]]" editable="[[editable]]"></metadata-editor>
+        <br>
         <div class="status-bar" pending$="[[releasePending]]">
           <div class="status-message">[[status]]</div>
           <paper-button hidden$="[[!editable]]" class="release-button" raised on-tap="releaseWork">
             <iron-icon icon="cloud-upload"></iron-icon>
-            Release
+            Release Work
           </paper-button>
+        </div>
+
+        <div class="license-area">
+          <div class="header">
+            Licenses
+            <paper-icon-button icon="add" on-tap="handleAddLicense"></paper-icon-button>
+          </div>
+          <template is="dom-repeat" items="{{work.licenses}}" as="license">
+            <license-editor license="{{license}}" work="{{work}}"></license-editor>
+          </template>
+          <div class="instructions" hidden$="{{_shouldHideInstructions(work.licenses.*)}}">
+            Click the "+" symbol to add a new license.
+          </div>
         </div>
       </div>
     </div>
