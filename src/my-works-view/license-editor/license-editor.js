@@ -93,6 +93,7 @@ Polymer({
   },
 
   addNewRoyalty : function() {
+    if (!this.license.editable) return;
     this.push('license.royalties', {
       name: '',
       address: '',
@@ -101,6 +102,7 @@ Polymer({
   },
 
   addNewContributor : function() {
+    if (!this.license.editable) return;
     this.push('license.contributors', {
       name: '',
       address: '',

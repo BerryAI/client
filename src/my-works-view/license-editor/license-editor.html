@@ -52,8 +52,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <div class="royalty-area-header">
             <div class="royalty-header">Royalties</div>
             <div>
-              <paper-button on-tap="addNewRoyalty" raised elevation="1">Add fixed payment</paper-button>
-              <paper-button on-tap="addNewContributor" raised elevation="1">Add shares</paper-button>
+              <paper-button on-tap="addNewRoyalty" raised elevation="1" hidden$=[[!license.editable]]>Add fixed payment</paper-button>
+              <paper-button on-tap="addNewContributor" raised elevation="1" hidden$=[[!license.editable]]>Add shares</paper-button>
             </div>
             <!--<paper-input hidden$={{!license.editable}} class="contributor-input" on-keydown="addRoyaltyOnEnter" label="add royalty address"></paper-input>-->
           </div>
