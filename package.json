@@ -3,9 +3,6 @@
   "main": "index.html",
   "version": "0.0.0",
   "private": true,
-  "scripts": {
-    "start": "C:/Users/Dan/Documents/Projects/MusicCoin/nwjs/nw.exe ."
-  },
   "dependencies": {
     "bignumber": "^1.1.0",
     "bignumber.js": "^2.4.0",
@@ -22,6 +19,7 @@
   "window": {
     "title": "Musicoin demo",
     "width": 1000,
-    "height": 600
+    "height": 600,
+    "icon": "images/manifest/64x64.png"
   }
 }

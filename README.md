@@ -9,3 +9,7 @@
 1. start geth `geth --rpc --rpcapi="db,eth,net,web3,personal" --rpcport "8545" --rpcaddr "127.0.0.1" --rpccorsdomain "localhost" --testnet`
 2. Start IPFS: `ipfs daemon`
 3. `nw` with the path to the folder containing package.json (e.g. `nw .`)
+
+# Packaging the application
+1. Install nwjs-builder: `npm install nwjs-builder -g`
+2. Package the app: `nwb nwbuild --with-ffmpeg --win-ico images/app.ico --mac-icns images/app.icns -p win64,osx64,linux64 -o build --executable-name musicoin`
