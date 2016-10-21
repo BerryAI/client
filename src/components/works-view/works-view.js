@@ -1,6 +1,6 @@
 // var ipfsUtil = require('../ipfs-connector.js');
 Polymer({
-    is: 'my-works-view',
+    is: 'works-view',
     ready: function() {
         this.ipfsUtils = new IPFSConnector();
         this.$.worksView.addEventListener('selected', function(e) {

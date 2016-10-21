@@ -23,7 +23,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/paper-progress/paper-progress.html">
 <link rel="import" href="../bower_components/iron-icons/av-icons.html">
 <link rel="import" href="../bower_components/iron-icons/social-icons.html">
-<link rel="import" href="my-works-view/my-works-view.html">
+<link rel="import" href="components/works-view/works-view.html">
 <script src="web3-connector.js"></script>
 <script src="musicoin-connector.js"></script>
 <script src="ipfs-connector.js"></script>
@@ -166,12 +166,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         flex-grow: 1;
         margin-left: 5px;
         margin-right: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
       }
 
       .audio-control-area {
         align-items: center;
         display: flex;
-        flex-grow: 0.8;
+        flex-grow: 0.9;
+        width: 200px;
       }
 
       .audio-info {
@@ -377,8 +382,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             attr-for-selected="name"
             fallback-selection="view404"
             role="main">
-          <my-player-view id="browse" show-group-play-icon name="player-view"></my-player-view>
-          <my-works-view id="works" name="works-view"></my-works-view>
+          <player-view id="browse" show-group-play-icon name="player-view"></player-view>
+          <works-view id="works" name="works-view"></works-view>
           <my-parity-view name="parity-view"></my-parity-view>
           <my-view404 name="view404"></my-view404>
         </iron-pages>
@@ -738,8 +743,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       _pageChanged: function(page) {
         console.log("pageChanged: " + page);
         // Load page import on demand. Show 404 page if fails
-        if (page == "works-view") {
-          var resolvedPageUrl = this.resolveUrl('my-' + page + '/' + 'my-' + page + '.html');
+        if (page == "works-view" || page == "player-view") {
+          // This is so dumb.  I don't understand what the point of this redirection is, but it does not
+          // support refactoring as I'm forced to construct strings on the fly.
+          var resolvedPageUrl = this.resolveUrl('components/' + page + '/' + page + '.html');
           this.importHref(resolvedPageUrl, null, this._showPage404, true);
         }
         else {
